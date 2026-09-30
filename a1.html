@@ -1,0 +1,2156 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>國小六年級自然科：互動式電動機（直流馬達）動畫實驗室</title>
+  <style>
+    :root {
+      --bg-gradient: radial-gradient(circle at 50% 20%, #1e1b4b 0%, #0f172a 60%, #020617 100%);
+      --card-bg: rgba(30, 41, 59, 0.78);
+      --card-border: rgba(255, 255, 255, 0.12);
+      --accent-cyan: #38bdf8;
+      --accent-amber: #fbbf24;
+      --accent-emerald: #34d399;
+      --accent-rose: #f43f5e;
+      --magnet-n: #ef4444;
+      --magnet-s: #3b82f6;
+      --copper: #f59e0b;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, "Microsoft JhengHei", "Noto Sans TC", sans-serif;
+      background: var(--bg-gradient);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    /* 頂部導航列 */
+    header {
+      background: rgba(15, 23, 42, 0.88);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--card-border);
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .brand-icon {
+      width: 44px;
+      height: 44px;
+      background: linear-gradient(135deg, #06b6d4, #6366f1);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      box-shadow: 0 0 18px rgba(6, 182, 212, 0.5);
+      animation: pulse-glow 3s infinite alternate;
+    }
+
+    @keyframes pulse-glow {
+      0% { box-shadow: 0 0 10px rgba(6, 182, 212, 0.4); transform: scale(1); }
+      100% { box-shadow: 0 0 25px rgba(99, 102, 241, 0.8); transform: scale(1.03); }
+    }
+
+    .brand-text h1 {
+      font-size: 1.25rem;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      background: linear-gradient(90deg, #38bdf8, #818cf8, #f472b6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .brand-text p {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn {
+      padding: 8px 16px;
+      border-radius: 10px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 1px solid transparent;
+      outline: none;
+      text-decoration: none;
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-main);
+      border-color: var(--card-border);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.16);
+      transform: translateY(-1px);
+    }
+
+    .btn-quiz {
+      background: linear-gradient(135deg, #f59e0b, #ec4899);
+      color: white;
+      box-shadow: 0 4px 14px rgba(245, 158, 11, 0.35);
+    }
+
+    .btn-quiz:hover {
+      transform: translateY(-1.5px);
+      box-shadow: 0 6px 20px rgba(236, 72, 153, 0.5);
+    }
+
+    /* 主要版面配置 */
+    main {
+      flex: 1;
+      max-width: 1460px;
+      margin: 0 auto;
+      width: 100%;
+      padding: 16px 24px 30px;
+      display: grid;
+      grid-template-columns: 1fr 390px;
+      gap: 20px;
+    }
+
+    @media (max-width: 1120px) {
+      main {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* 左側：主視覺模擬舞台 */
+    .stage-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 22px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      backdrop-filter: blur(16px);
+      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.45);
+      position: relative;
+    }
+
+    /* 即時數據面板 */
+    .status-dashboard {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    @media (max-width: 680px) {
+      .status-dashboard {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    .stat-pill {
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      padding: 10px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-pill::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background: var(--accent-cyan);
+    }
+
+    .stat-pill.stat-direction::before { background: var(--accent-amber); }
+    .stat-pill.stat-rpm::before { background: var(--accent-emerald); }
+    .stat-pill.stat-ring::before { background: #c084fc; }
+
+    .stat-label {
+      font-size: 0.74rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .stat-val {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* 畫布容器 */
+    .canvas-container {
+      position: relative;
+      width: 100%;
+      height: 530px;
+      background: radial-gradient(circle at center, #1e293b 0%, #090d16 100%);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: inset 0 0 35px rgba(0, 0, 0, 0.85);
+    }
+
+    #motorCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* 浮動提示膠囊 */
+    .canvas-overlay-tip {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      background: rgba(15, 23, 42, 0.88);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 12px;
+      padding: 8px 16px;
+      font-size: 0.82rem;
+      color: #e2e8f0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      pointer-events: none;
+      z-index: 10;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    .canvas-overlay-tip .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 10px #10b981;
+      animation: blink 1.2s infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    /* 畫布右上方力矩即時指針 */
+    .torque-meter-overlay {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      background: rgba(15, 23, 42, 0.88);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 12px;
+      padding: 8px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      z-index: 10;
+      min-width: 150px;
+    }
+
+    .torque-meter-title {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      font-weight: 600;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .torque-meter-bar-bg {
+      width: 100%;
+      height: 8px;
+      background: #334155;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .torque-meter-bar-fill {
+      height: 100%;
+      width: 100%;
+      background: linear-gradient(90deg, #38bdf8, #10b981);
+      transition: width 0.05s linear;
+    }
+
+    /* 底部快速開關欄 */
+    .canvas-quick-bar {
+      position: absolute;
+      bottom: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(15, 23, 42, 0.9);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 40px;
+      padding: 6px 18px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      z-index: 10;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+      white-space: nowrap;
+    }
+
+    @media (max-width: 768px) {
+      .canvas-quick-bar {
+        display: none;
+      }
+    }
+
+    .quick-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      color: #cbd5e1;
+      transition: all 0.2s;
+    }
+
+    .quick-item:hover {
+      color: #38bdf8;
+    }
+
+    .quick-item input[type="checkbox"] {
+      cursor: pointer;
+      accent-color: #0284c7;
+    }
+
+    /* 角度拉桿 / 慢動作解析 */
+    .timeline-bar {
+      margin-top: 14px;
+      background: rgba(15, 23, 42, 0.65);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .timeline-bar label {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    .slider {
+      flex: 1;
+      -webkit-appearance: none;
+      height: 6px;
+      border-radius: 3px;
+      background: #334155;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #38bdf8;
+      box-shadow: 0 0 12px #0284c7;
+      cursor: pointer;
+      transition: transform 0.1s;
+    }
+
+    .slider::-webkit-slider-thumb:hover {
+      transform: scale(1.25);
+    }
+
+    /* 右側：操控儀表板 */
+    .controls-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .control-box {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 18px;
+      padding: 18px;
+      backdrop-filter: blur(16px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    .box-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+
+    .box-title {
+      font-size: 0.96rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #fff;
+    }
+
+    .box-badge {
+      font-size: 0.72rem;
+      background: rgba(56, 189, 248, 0.15);
+      color: #38bdf8;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-weight: 600;
+    }
+
+    /* 大開關 Switch */
+    .main-power-switch {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 14px;
+      padding: 12px 18px;
+    }
+
+    .switch-info h3 {
+      font-size: 1rem;
+      color: #fff;
+    }
+
+    .switch-info p {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .switch-btn {
+      position: relative;
+      width: 70px;
+      height: 38px;
+      background: #334155;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: background 0.3s;
+      border: 2px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .switch-btn.on {
+      background: linear-gradient(90deg, #10b981, #059669);
+      box-shadow: 0 0 18px rgba(16, 185, 129, 0.6);
+    }
+
+    .switch-knob {
+      position: absolute;
+      top: 3px;
+      left: 4px;
+      width: 28px;
+      height: 28px;
+      background: #fff;
+      border-radius: 50%;
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+    }
+
+    .switch-btn.on .switch-knob {
+      transform: translateX(32px);
+    }
+
+    /* 變數控制網格 */
+    .var-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .var-row {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .var-label-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #cbd5e1;
+    }
+
+    .var-label-row span.val-hint {
+      color: #38bdf8;
+      font-weight: 700;
+    }
+
+    /* 分段按鈕群組 */
+    .segmented-control {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+      padding: 3px;
+      gap: 4px;
+    }
+
+    .segmented-control.two-cols {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .seg-item {
+      padding: 8px 6px;
+      text-align: center;
+      font-size: 0.78rem;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      color: var(--text-muted);
+      transition: all 0.2s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+
+    .seg-item:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .seg-item.active {
+      background: linear-gradient(135deg, #0284c7, #2563eb);
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(2, 132, 199, 0.4);
+    }
+
+    /* 播放速度控制按鈕 */
+    .speed-buttons {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .speed-btn {
+      padding: 8px 4px;
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+      color: #cbd5e1;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .speed-btn.active {
+      background: #4f46e5;
+      color: white;
+      border-color: #818cf8;
+      box-shadow: 0 0 12px rgba(99, 102, 241, 0.5);
+    }
+
+    /* 快速科普小卡片 (小六重點摘要) */
+    .edu-tip-box {
+      background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95));
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      border-radius: 14px;
+      padding: 14px;
+      display: flex;
+      gap: 12px;
+    }
+
+    .edu-tip-icon {
+      font-size: 26px;
+      flex-shrink: 0;
+    }
+
+    .edu-tip-content h4 {
+      font-size: 0.88rem;
+      color: #38bdf8;
+      margin-bottom: 4px;
+    }
+
+    .edu-tip-content p {
+      font-size: 0.78rem;
+      color: #cbd5e1;
+      line-height: 1.45;
+    }
+
+    /* Modal 視窗 (知識指南 & 測驗) */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.78);
+      backdrop-filter: blur(8px);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .modal-backdrop.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-dialog {
+      background: #0f172a;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 24px;
+      width: 100%;
+      max-width: 680px;
+      max-height: 85vh;
+      overflow-y: auto;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.75);
+      transform: translateY(20px) scale(0.97);
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .modal-backdrop.show .modal-dialog {
+      transform: translateY(0) scale(1);
+    }
+
+    .modal-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      background: #0f172a;
+      z-index: 10;
+    }
+
+    .modal-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .modal-close {
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      color: #94a3b8;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      transition: all 0.2s;
+    }
+
+    .modal-close:hover {
+      background: rgba(239, 68, 68, 0.3);
+      color: #f87171;
+    }
+
+    .modal-body {
+      padding: 24px;
+      color: #e2e8f0;
+      font-size: 0.92rem;
+      line-height: 1.6;
+    }
+
+    /* 測驗特定樣式 */
+    .quiz-card {
+      background: rgba(30, 41, 59, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      padding: 18px;
+      margin-bottom: 16px;
+    }
+
+    .quiz-question {
+      font-weight: 700;
+      font-size: 0.98rem;
+      margin-bottom: 12px;
+      color: #fff;
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    .quiz-options {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .quiz-opt {
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 10px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 0.88rem;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .quiz-opt:hover {
+      background: rgba(56, 189, 248, 0.12);
+      border-color: rgba(56, 189, 248, 0.4);
+    }
+
+    .quiz-opt.correct {
+      background: rgba(16, 185, 129, 0.2) !important;
+      border-color: #10b981 !important;
+      color: #6ee7b7;
+      font-weight: 600;
+    }
+
+    .quiz-opt.wrong {
+      background: rgba(239, 68, 68, 0.2) !important;
+      border-color: #ef4444 !important;
+      color: #fca5a5;
+    }
+
+    .quiz-feedback {
+      margin-top: 10px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      display: none;
+    }
+
+    .quiz-feedback.show {
+      display: block;
+    }
+
+    .quiz-feedback.success {
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: #6ee7b7;
+    }
+
+    .quiz-feedback.error {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #fca5a5;
+    }
+
+    /* 原理圖文卡片 */
+    .edu-section {
+      margin-bottom: 24px;
+    }
+
+    .edu-section h3 {
+      font-size: 1.05rem;
+      color: #38bdf8;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-top: 10px;
+    }
+
+    .feature-card {
+      background: rgba(30, 41, 59, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 12px;
+    }
+
+    .feature-card h4 {
+      font-size: 0.88rem;
+      color: #f59e0b;
+      margin-bottom: 4px;
+    }
+
+    .feature-card p {
+      font-size: 0.8rem;
+      color: #94a3b8;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 頂部標題與快速導航 -->
+  <header>
+    <div class="brand">
+      <div class="brand-icon">⚡</div>
+      <div class="brand-text">
+        <h1>電動機（直流馬達）互動實驗室</h1>
+        <p>國小六年級自然科：電磁鐵與電動機的運作秘密</p>
+      </div>
+    </div>
+    <div class="nav-actions">
+      <a href="index.html" class="btn btn-secondary" title="返回首頁">
+        <span>🏠</span>
+        <span>首頁</span>
+      </a>
+      <button class="btn btn-secondary" id="btnSoundToggle" title="開關聲音效">
+        <span id="soundIcon">🔊</span>
+        <span>音效</span>
+      </button>
+      <button class="btn btn-secondary" id="btnKnowledge">
+        <span>📖</span>
+        <span>原理指南</span>
+      </button>
+      <button class="btn btn-quiz" id="btnQuiz">
+        <span>🎯</span>
+        <span>隨堂挑戰賽</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- 主要實驗區域 -->
+  <main>
+    <!-- 左側：視覺化舞台 -->
+    <section class="stage-card">
+      <!-- 狀態即時資訊 -->
+      <div class="status-dashboard">
+        <div class="stat-pill stat-power">
+          <span class="stat-label">電源狀態</span>
+          <span class="stat-val" id="statPower">
+            <span style="color: #ef4444;">●</span> 斷電 (OFF)
+          </span>
+        </div>
+        <div class="stat-pill stat-direction">
+          <span class="stat-label">轉動方向</span>
+          <span class="stat-val" id="statDirection">順時針 (↻)</span>
+        </div>
+        <div class="stat-pill stat-rpm">
+          <span class="stat-label">旋轉速度 (RPM)</span>
+          <span class="stat-val" id="statRpm">0 RPM</span>
+        </div>
+        <div class="stat-pill stat-ring">
+          <span class="stat-label">集電環狀態</span>
+          <span class="stat-val" id="statCommutator" style="font-size: 0.88rem;">接觸導電中</span>
+        </div>
+      </div>
+
+      <!-- 畫布區塊 -->
+      <div class="canvas-container">
+        <!-- 畫布上方狀態說明 -->
+        <div class="canvas-overlay-tip">
+          <div class="dot"></div>
+          <span id="canvasStatusText">馬達就緒中：開啟電源觀察線圈旋轉！</span>
+        </div>
+
+        <!-- 即時轉動力矩儀表 -->
+        <div class="torque-meter-overlay">
+          <div class="torque-meter-title">
+            <span>旋轉力矩 (Torque)</span>
+            <span id="torquePercentText">100%</span>
+          </div>
+          <div class="torque-meter-bar-bg">
+            <div class="torque-meter-bar-fill" id="torqueBar"></div>
+          </div>
+        </div>
+
+        <canvas id="motorCanvas"></canvas>
+
+        <!-- 畫布底部快速開關 -->
+        <div class="canvas-quick-bar">
+          <label class="quick-item">
+            <input type="checkbox" id="chkMagneticLines" checked>
+            <span>磁力線 (N→S)</span>
+          </label>
+          <label class="quick-item">
+            <input type="checkbox" id="chkCurrentFlow" checked>
+            <span>電流流向 (粒子)</span>
+          </label>
+          <label class="quick-item">
+            <input type="checkbox" id="chkForceVectors" checked>
+            <span>受力方向 (推力)</span>
+          </label>
+          <label class="quick-item">
+            <input type="checkbox" id="chkHandRule">
+            <span>右手開掌定則提示</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- 角度拉桿 / 慢動作解析 -->
+      <div class="timeline-bar">
+        <label>慢速步進 / 觀察角度：</label>
+        <input type="range" id="angleSlider" class="slider" min="0" max="360" value="0">
+        <span id="angleValue" style="font-size: 0.85rem; font-weight:700; color:#38bdf8; min-width: 45px;">0°</span>
+      </div>
+    </section>
+
+    <!-- 右側：操控儀表板 -->
+    <aside class="controls-panel">
+      <!-- 開關大按鍵 -->
+      <div class="control-box">
+        <div class="main-power-switch">
+          <div class="switch-info">
+            <h3 id="switchTitle">馬達總電源</h3>
+            <p id="switchSubtitle">點擊切換通電 / 斷電</p>
+          </div>
+          <div class="switch-btn" id="powerSwitch">
+            <div class="switch-knob"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 實驗三大變數控制 -->
+      <div class="control-box">
+        <div class="box-header">
+          <div class="box-title">
+            <span>🧪 探究變因實驗區</span>
+          </div>
+          <span class="box-badge">六下自然重點</span>
+        </div>
+
+        <div class="var-grid">
+          <!-- 變因 1: 電池數量 (電壓/電流強弱) -->
+          <div class="var-row">
+            <div class="var-label-row">
+              <span>🔋 串聯電池數量 (電壓大小)</span>
+              <span class="val-hint" id="batteryHint">1 顆 (1.5V)</span>
+            </div>
+            <div class="segmented-control" id="batteryControl">
+              <div class="seg-item active" data-val="1">
+                <span>1 顆</span>
+                <small style="font-size: 0.68rem; opacity:0.75;">慢速 (1.5V)</small>
+              </div>
+              <div class="seg-item" data-val="2">
+                <span>2 顆</span>
+                <small style="font-size: 0.68rem; opacity:0.75;">中速 (3.0V)</small>
+              </div>
+              <div class="seg-item" data-val="3">
+                <span>3 顆</span>
+                <small style="font-size: 0.68rem; opacity:0.75;">強力 (4.5V)</small>
+              </div>
+            </div>
+          </div>
+
+          <!-- 變因 2: 電池方向 (改變電流方向) -->
+          <div class="var-row">
+            <div class="var-label-row">
+              <span>🔄 電池正負極方向 (電流方向)</span>
+              <span class="val-hint" id="polarityHint">正向 (左+ 右-)</span>
+            </div>
+            <div class="segmented-control two-cols" id="polarityControl">
+              <div class="seg-item active" data-val="normal">
+                <span>⚡ 正極在左 (+)</span>
+              </div>
+              <div class="seg-item" data-val="reverse">
+                <span>⚡ 反接：正極在右 (+)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 變因 3: 磁鐵磁極方向 -->
+          <div class="var-row">
+            <div class="var-label-row">
+              <span>🧲 永久磁鐵磁極配置</span>
+              <span class="val-hint" id="magnetHint">左 N 極 / 右 S 極</span>
+            </div>
+            <div class="segmented-control two-cols" id="magnetControl">
+              <div class="seg-item active" data-val="NS">
+                <span>🔴 左 N / 🔵 右 S</span>
+              </div>
+              <div class="seg-item" data-val="SN">
+                <span>🔵 左 S / 🔴 右 N</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 變因 4: 線圈圈數 -->
+          <div class="var-row">
+            <div class="var-label-row">
+              <span>🌀 電磁鐵線圈纏繞圈數</span>
+              <span class="val-hint" id="coilsHint">標準 20 圈</span>
+            </div>
+            <div class="segmented-control" id="coilsControl">
+              <div class="seg-item" data-val="10">
+                <span>10 圈</span>
+                <small style="font-size: 0.68rem; opacity:0.75;">磁力較小</small>
+              </div>
+              <div class="seg-item active" data-val="20">
+                <span>20 圈</span>
+                <small style="font-size: 0.68rem; opacity:0.75;">標準力矩</small>
+              </div>
+              <div class="seg-item" data-val="30">
+                <span>30 圈</span>
+                <small style="font-size: 0.68rem; opacity:0.75;">磁力最強</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 播放速度控制 -->
+      <div class="control-box">
+        <div class="box-header">
+          <div class="box-title">
+            <span>⏱️ 轉速與觀察模式</span>
+          </div>
+        </div>
+        <div class="speed-buttons" id="speedButtons">
+          <button class="speed-btn active" data-speed="1">常規速度 (1x)</button>
+          <button class="speed-btn" data-speed="0.25">慢動作 (0.25x)</button>
+          <button class="speed-btn" data-speed="pause">定格分析 (Pause)</button>
+        </div>
+      </div>
+
+      <!-- 小六考點快速提示卡 -->
+      <div class="edu-tip-box">
+        <div class="edu-tip-icon">💡</div>
+        <div class="edu-tip-content">
+          <h4>小學自然科核心關鍵：半圓形集電環！</h4>
+          <p>
+            如果沒有集電環，線圈轉到垂直位置就會卡住！集電環每轉半圈（180°）自動切換一次電流方向，配合<strong>慣性</strong>跨過垂直點，馬達才能源源不絕持續同向轉動！
+          </p>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <!-- 彈跳視窗 1：原理指南手冊 -->
+  <div class="modal-backdrop" id="modalKnowledge">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span>📖</span>
+          <span>國小六年級：電動機（馬達）圖解秘笈</span>
+        </div>
+        <button class="modal-close" id="btnCloseKnowledge">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="edu-section">
+          <h3>🎯 什麼是電動機（馬達）？</h3>
+          <p>
+            電動機是將<strong>電能</strong>轉變為<strong>旋轉力矩與動能</strong>的裝置。生活中常見的電風扇、遙控車、吹風機、吸塵器、洗衣機、捷運與電動車，內部都有馬達在高速旋轉喔！
+          </p>
+        </div>
+
+        <div class="edu-section">
+          <h3>⚙️ 直流馬達的四大核心構造</h3>
+          <div class="feature-grid">
+            <div class="feature-card">
+              <h4>1. 永久磁鐵 (固定在兩側)</h4>
+              <p>提供穩定的磁場（磁力線由 N 極指向 S 極），推動或吸引通電中的線圈。</p>
+            </div>
+            <div class="feature-card">
+              <h4>2. 線圈 (電磁鐵/電樞)</h4>
+              <p>漆包線纏繞而成的方型線圈，通電時會產生磁性，並在磁場中受到垂直推力旋轉。</p>
+            </div>
+            <div class="feature-card">
+              <h4>3. 半圓形集電環 (換向器)</h4>
+              <p><strong>最關鍵元件！</strong>兩個互相分開的半圓形銅環，每旋轉半圈(180°)就自動顛倒電流方向一次！</p>
+            </div>
+            <div class="feature-card">
+              <h4>4. 電刷 (碳刷/金屬片)</h4>
+              <p>固定在兩側輕輕接觸集電環，負責將電池的電流順暢導入旋轉中的線圈。</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="edu-section">
+          <h3>🔍 為什麼馬達能一直朝同一個方向轉？</h3>
+          <p>
+            1. <strong>水平位置（力矩最大）</strong>：左側導線與右側導線電流方向相反，左邊受向上的推力，右邊受向下的推力，產生最大旋轉力矩！<br>
+            2. <strong>垂直位置（死點缺口）</strong>：當線圈轉到垂直位置時，電刷剛好對準集電環的<strong>缺口</strong>，此時線圈短暫斷電不受力，但靠著<strong>運動慣性</strong>跨過垂直點。<br>
+            3. <strong>跨過缺口（電流換向）</strong>：一跨過垂直點，集電環換邊接觸電刷，讓線圈內的電流方向瞬間對調，推力方向維持同一個轉動方向，因此能持續不停旋轉！
+          </p>
+        </div>
+
+        <div class="edu-section">
+          <h3>⭐ 國小期末大考重點歸納</h3>
+          <div class="feature-card" style="background: rgba(14, 165, 233, 0.1); border-color: rgba(14, 165, 233, 0.3);">
+            <ul style="padding-left: 20px; line-height: 1.8;">
+              <li><strong>想要轉得更快？</strong>：增加電池數量（加大電壓）、增加線圈圈數、換更強的磁鐵。</li>
+              <li><strong>想要改變旋轉方向？</strong>：將電池正負極顛倒，<strong>或者</strong>將兩側磁鐵極性對調（二選一）。</li>
+              <li><strong>魔王題陷阱！</strong>：如果<strong>同時</strong>把電池正負極顛倒 <strong>且</strong> 磁鐵也對調，馬達的旋轉方向<strong>不會改變</strong>（負負得正）！</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 彈跳視窗 2：小六隨堂大挑戰 -->
+  <div class="modal-backdrop" id="modalQuiz">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span>🎯</span>
+          <span>國小六年級自然科：馬達小達人挑戰賽</span>
+        </div>
+        <button class="modal-close" id="btnCloseQuiz">✕</button>
+      </div>
+      <div class="modal-body" id="quizContainer">
+        <!-- 題目由 JavaScript 動態渲染 -->
+      </div>
+    </div>
+  </div>
+
+  <!-- 核心動畫與物理模擬腳本 -->
+  <script>
+    if (!CanvasRenderingContext2D.prototype.roundRect) {
+      CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
+        if (typeof r === 'undefined') r = 0;
+        if (typeof r === 'number') r = [r, r, r, r];
+        const [tl, tr, br, bl] = r;
+        this.beginPath();
+        this.moveTo(x + tl, y);
+        this.lineTo(x + w - tr, y);
+        this.quadraticCurveTo(x + w, y, x + w, y + tr);
+        this.lineTo(x + w, y + h - br);
+        this.quadraticCurveTo(x + w, y + h, x + w - br, y + h);
+        this.lineTo(x + bl, y + h);
+        this.quadraticCurveTo(x, y + h, x, y + h - bl);
+        this.lineTo(x, y + tl);
+        this.quadraticCurveTo(x, y, x + tl, y);
+        this.closePath();
+        return this;
+      };
+    }
+
+    const state = {
+      power: false,
+      batteries: 1,
+      polarity: 'normal',
+      magnet: 'NS',
+      coils: 20,
+      speedMode: 1,
+      angle: 0,
+      angularSpeed: 0,
+      targetAngularSpeed: 0,
+      direction: 1,
+      soundEnabled: true,
+      showMagneticLines: true,
+      showCurrentFlow: true,
+      showForceVectors: true,
+      showHandRule: false,
+      isDraggingSlider: false,
+      particles: []
+    };
+
+    class SoundEngine {
+      constructor() {
+        this.ctx = null;
+        this.motorOsc = null;
+        this.motorGain = null;
+      }
+
+      init() {
+        if (!this.ctx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          if (AudioContext) this.ctx = new AudioContext();
+        }
+      }
+
+      playSwitchClick(on) {
+        if (!state.soundEnabled) return;
+        this.init();
+        if (!this.ctx) return;
+        if (this.ctx.state === 'suspended') this.ctx.resume();
+
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(on ? 480 : 280, this.ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(on ? 880 : 140, this.ctx.currentTime + 0.08);
+
+        gain.gain.setValueAtTime(0.25, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.08);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.09);
+      }
+
+      updateMotorHum(rpm) {
+        if (!state.soundEnabled || rpm <= 5 || !state.power) {
+          if (this.motorGain && this.ctx) {
+            this.motorGain.gain.setTargetAtTime(0, this.ctx.currentTime, 0.05);
+          }
+          return;
+        }
+
+        this.init();
+        if (!this.ctx) return;
+        if (this.ctx.state === 'suspended') this.ctx.resume();
+
+        if (!this.motorOsc) {
+          this.motorOsc = this.ctx.createOscillator();
+          this.motorGain = this.ctx.createGain();
+          this.motorOsc.type = 'sawtooth';
+          this.motorGain.gain.setValueAtTime(0, this.ctx.currentTime);
+          this.motorOsc.connect(this.motorGain);
+          this.motorGain.connect(this.ctx.destination);
+          this.motorOsc.start();
+        }
+
+        const targetFreq = 50 + (rpm / 300) * 110;
+        this.motorOsc.frequency.setTargetAtTime(targetFreq, this.ctx.currentTime, 0.1);
+        this.motorGain.gain.setTargetAtTime(0.035, this.ctx.currentTime, 0.1);
+      }
+    }
+
+    const sound = new SoundEngine();
+
+    const canvas = document.getElementById('motorCanvas');
+    const ctx = canvas.getContext('2d');
+
+    function resizeCanvas() {
+      const rect = canvas.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      ctx.resetTransform();
+      ctx.scale(dpr, dpr);
+    }
+    window.addEventListener('resize', resizeCanvas);
+
+    for (let i = 0; i < 60; i++) {
+      state.particles.push({
+        t: Math.random(),
+        speed: 0.005 + Math.random() * 0.003
+      });
+    }
+
+    function computeMotorPhysics() {
+      const pFactor = state.polarity === 'normal' ? 1 : -1;
+      const mFactor = state.magnet === 'NS' ? 1 : -1;
+      state.direction = pFactor * mFactor;
+
+      if (!state.power || state.speedMode === 0) {
+        state.targetAngularSpeed = 0;
+      } else {
+        const baseSpeed = (state.batteries * 1.6) * (state.coils / 20);
+        state.targetAngularSpeed = baseSpeed * state.direction * state.speedMode;
+      }
+
+      if (!state.isDraggingSlider) {
+        state.angularSpeed += (state.targetAngularSpeed - state.angularSpeed) * 0.06;
+        state.angle = (state.angle + state.angularSpeed * 2.6) % 360;
+        if (state.angle < 0) state.angle += 360;
+      }
+
+      updateDashboardUI();
+    }
+
+    function updateDashboardUI() {
+      const statPower = document.getElementById('statPower');
+      const statDirection = document.getElementById('statDirection');
+      const statRpm = document.getElementById('statRpm');
+      const statCommutator = document.getElementById('statCommutator');
+      const canvasStatusText = document.getElementById('canvasStatusText');
+      const angleSlider = document.getElementById('angleSlider');
+      const angleValue = document.getElementById('angleValue');
+      const torqueBar = document.getElementById('torqueBar');
+      const torquePercentText = document.getElementById('torquePercentText');
+
+      if (state.power) {
+        statPower.innerHTML = '<span style="color: #10b981;">●</span> 通電中 (ON)';
+      } else {
+        statPower.innerHTML = '<span style="color: #ef4444;">●</span> 斷電 (OFF)';
+      }
+
+      if (state.direction === 1) {
+        statDirection.innerHTML = '順時針 (↻ CW)';
+        statDirection.style.color = '#38bdf8';
+      } else {
+        statDirection.innerHTML = '逆時針 (↺ CCW)';
+        statDirection.style.color = '#f472b6';
+      }
+
+      const currentRpm = Math.round(Math.abs(state.angularSpeed) * 60);
+      statRpm.textContent = `${currentRpm} RPM`;
+      sound.updateMotorHum(currentRpm);
+
+      if (!state.isDraggingSlider) {
+        angleSlider.value = Math.round(state.angle);
+      }
+      angleValue.textContent = `${Math.round(state.angle)}°`;
+
+      const normAngle = state.angle % 180;
+      const isNearGap = Math.abs(normAngle - 90) < 12;
+
+      const torqueFactor = isNearGap ? 0 : Math.abs(Math.cos((state.angle * Math.PI) / 180));
+      const torquePct = state.power ? Math.round(torqueFactor * 100) : 0;
+      torqueBar.style.width = `${torquePct}%`;
+      torquePercentText.textContent = `${torquePct}%`;
+
+      if (!state.power) {
+        statCommutator.textContent = '斷電停止';
+        statCommutator.style.color = '#94a3b8';
+        canvasStatusText.textContent = '目前未通電，請打開右上方電源總開關！';
+      } else if (isNearGap) {
+        statCommutator.textContent = '⚡ 跨越缺口（靠慣性轉動）';
+        statCommutator.style.color = '#fbbf24';
+        canvasStatusText.textContent = '【關鍵觀察】電刷正對準集電環缺口！線圈斷電不受力，靠「慣性」滑過垂直點！';
+      } else {
+        statCommutator.textContent = '接觸導電中（磁力推動）';
+        statCommutator.style.color = '#34d399';
+        canvasStatusText.textContent = `馬達運轉中：左右兩端受到磁場推力，帶動線圈朝「${state.direction === 1 ? '順時針' : '逆時針'}」旋轉！`;
+      }
+    }
+
+    function drawMotor() {
+      const rect = canvas.getBoundingClientRect();
+      const W = rect.width;
+      const H = rect.height;
+
+      ctx.clearRect(0, 0, W, H);
+
+      const cx = W / 2;
+      const cy = H / 2 - 38;
+
+      drawTechGrid(W, H);
+
+      if (state.showMagneticLines) {
+        drawMagneticFieldLines(cx, cy);
+      }
+
+      drawMagnets(cx, cy);
+      drawExternalCircuit(cx, cy);
+      drawArmatureAssembly(cx, cy);
+
+      if (state.showForceVectors && state.power) {
+        drawForceVectors(cx, cy);
+      }
+
+      if (state.showHandRule && state.power) {
+        drawHandRuleHelper(cx, cy);
+      }
+    }
+
+    function drawTechGrid(W, H) {
+      ctx.save();
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.035)';
+      ctx.lineWidth = 1;
+      const step = 40;
+      for (let x = 0; x < W; x += step) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, H);
+        ctx.stroke();
+      }
+      for (let y = 0; y < H; y += step) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(W, y);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawMagneticFieldLines(cx, cy) {
+      ctx.save();
+      const isLeftN = state.magnet === 'NS';
+      const startX = cx - 200;
+      const endX = cx + 200;
+      const count = 7;
+      const time = performance.now() * 0.002;
+
+      ctx.lineWidth = 1.5;
+
+      for (let i = 0; i < count; i++) {
+        const y = cy - 90 + i * 30;
+        ctx.beginPath();
+        ctx.moveTo(startX, y);
+        ctx.lineTo(endX, y);
+
+        const grad = ctx.createLinearGradient(startX, y, endX, y);
+        if (isLeftN) {
+          grad.addColorStop(0, 'rgba(239, 68, 68, 0.45)');
+          grad.addColorStop(0.5, 'rgba(56, 189, 248, 0.6)');
+          grad.addColorStop(1, 'rgba(59, 130, 246, 0.45)');
+        } else {
+          grad.addColorStop(0, 'rgba(59, 130, 246, 0.45)');
+          grad.addColorStop(0.5, 'rgba(56, 189, 248, 0.6)');
+          grad.addColorStop(1, 'rgba(239, 68, 68, 0.45)');
+        }
+        ctx.strokeStyle = grad;
+        ctx.setLineDash([8, 8]);
+        ctx.lineDashOffset = isLeftN ? -time * 25 : time * 25;
+        ctx.stroke();
+
+        const arrowX = cx + (isLeftN ? 1 : -1) * 75;
+        drawArrowHead(arrowX, y, isLeftN ? 0 : Math.PI, 6, '#38bdf8');
+      }
+
+      ctx.font = '11px sans-serif';
+      ctx.fillStyle = 'rgba(56, 189, 248, 0.85)';
+      ctx.textAlign = 'center';
+      ctx.fillText(isLeftN ? '磁場方向：N → S (向右)' : '磁場方向：N → S (向左)', cx, cy - 110);
+
+      ctx.restore();
+    }
+
+    function drawArrowHead(x, y, angle, size, color) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(angle);
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(-size * 1.5, -size * 0.7);
+      ctx.lineTo(-size * 1.5, size * 0.7);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawMagnets(cx, cy) {
+      ctx.save();
+      const mWidth = 75;
+      const mHeight = 220;
+      const gap = 380;
+      const leftIsN = state.magnet === 'NS';
+
+      drawMagnetBlock(cx - gap / 2, cy - mHeight / 2, mWidth, mHeight, leftIsN ? 'N' : 'S', true);
+      drawMagnetBlock(cx + gap / 2 - mWidth, cy - mHeight / 2, mWidth, mHeight, leftIsN ? 'S' : 'N', false);
+
+      ctx.restore();
+    }
+
+    function drawMagnetBlock(x, y, w, h, pole, isLeft) {
+      const isN = pole === 'N';
+      const mainColor = isN ? '#ef4444' : '#3b82f6';
+      const darkColor = isN ? '#991b1b' : '#1e40af';
+
+      const grad = ctx.createLinearGradient(x, y, x + w, y);
+      if (isLeft) {
+        grad.addColorStop(0, darkColor);
+        grad.addColorStop(1, mainColor);
+      } else {
+        grad.addColorStop(0, mainColor);
+        grad.addColorStop(1, darkColor);
+      }
+
+      ctx.fillStyle = grad;
+      ctx.shadowColor = isN ? 'rgba(239, 68, 68, 0.35)' : 'rgba(59, 130, 246, 0.35)';
+      ctx.shadowBlur = 14;
+
+      ctx.beginPath();
+      if (isLeft) {
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + w - 12, y);
+        ctx.quadraticCurveTo(x + w + 8, y + h / 2, x + w - 12, y + h);
+        ctx.lineTo(x, y + h);
+      } else {
+        ctx.moveTo(x + 12, y);
+        ctx.lineTo(x + w, y);
+        ctx.lineTo(x + w, y + h);
+        ctx.lineTo(x + 12, y + h);
+        ctx.quadraticCurveTo(x - 8, y + h / 2, x + 12, y);
+      }
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 36px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      const textX = isLeft ? x + w / 2 - 6 : x + w / 2 + 6;
+      ctx.fillText(pole, textX, y + h / 2 - 12);
+
+      ctx.font = 'bold 12px sans-serif';
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+      ctx.fillText(isN ? 'N 極 (紅)' : 'S 極 (藍)', textX, y + h / 2 + 22);
+    }
+
+    function drawExternalCircuit(cx, cy) {
+      ctx.save();
+
+      const brushLeftX = cx - 34;
+      const brushRightX = cx + 34;
+      const brushY = cy + 115;
+      const circuitBottomY = cy + 195;
+
+      const isNormal = state.polarity === 'normal';
+      const leftWireColor = isNormal ? '#ef4444' : '#3b82f6';
+      const rightWireColor = isNormal ? '#3b82f6' : '#ef4444';
+
+      ctx.lineWidth = 4;
+      ctx.lineCap = 'round';
+
+      ctx.strokeStyle = leftWireColor;
+      ctx.shadowColor = leftWireColor;
+      ctx.shadowBlur = state.power ? 8 : 0;
+      ctx.beginPath();
+      ctx.moveTo(brushLeftX, brushY);
+      ctx.lineTo(brushLeftX - 65, brushY + 25);
+      ctx.lineTo(brushLeftX - 65, circuitBottomY);
+      ctx.lineTo(cx - 75, circuitBottomY);
+      ctx.stroke();
+
+      ctx.strokeStyle = rightWireColor;
+      ctx.shadowColor = rightWireColor;
+      ctx.beginPath();
+      ctx.moveTo(brushRightX, brushY);
+      ctx.lineTo(brushRightX + 65, brushY + 25);
+      ctx.lineTo(brushRightX + 65, circuitBottomY);
+      ctx.lineTo(cx + 75, circuitBottomY);
+      ctx.stroke();
+
+      drawBatteryPack(cx, circuitBottomY);
+
+      if (state.power && state.showCurrentFlow) {
+        drawCurrentParticles(cx, brushLeftX, brushRightX, brushY, circuitBottomY, isNormal);
+      }
+
+      ctx.restore();
+    }
+
+    function drawBatteryPack(cx, y) {
+      const count = state.batteries;
+      const totalWidth = count * 44;
+      const startX = cx - totalWidth / 2;
+      const bHeight = 26;
+      const bY = y - bHeight / 2;
+
+      ctx.save();
+      ctx.shadowBlur = 0;
+      const isNormal = state.polarity === 'normal';
+
+      for (let i = 0; i < count; i++) {
+        const bx = startX + i * 44;
+        const bGrad = ctx.createLinearGradient(bx, bY, bx, bY + bHeight);
+        bGrad.addColorStop(0, '#334155');
+        bGrad.addColorStop(0.5, '#64748b');
+        bGrad.addColorStop(1, '#1e293b');
+
+        ctx.fillStyle = bGrad;
+        ctx.beginPath();
+        ctx.roundRect(bx + 4, bY, 36, bHeight, 4);
+        ctx.fill();
+
+        ctx.strokeStyle = '#94a3b8';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        const capX = isNormal ? bx + 2 : bx + 36;
+        ctx.fillStyle = '#fbbf24';
+        ctx.fillRect(capX, bY + 6, 4, 14);
+
+        ctx.font = 'bold 12px monospace';
+        ctx.fillStyle = '#fff';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        if (isNormal) {
+          ctx.fillText('+', bx + 12, bY + bHeight / 2);
+          ctx.fillText('-', bx + 28, bY + bHeight / 2);
+        } else {
+          ctx.fillText('-', bx + 12, bY + bHeight / 2);
+          ctx.fillText('+', bx + 28, bY + bHeight / 2);
+        }
+      }
+
+      ctx.font = '11px sans-serif';
+      ctx.fillStyle = '#38bdf8';
+      ctx.textAlign = 'center';
+      ctx.fillText(`${count} 顆 1.5V 電池串聯 (${(count * 1.5).toFixed(1)}V)`, cx, y + 26);
+      ctx.restore();
+    }
+
+    function drawCurrentParticles(cx, blx, brx, by, cy, isNormal) {
+      const time = performance.now() * 0.003;
+      const speedMult = state.batteries * (state.speedMode === 0 ? 0 : 1);
+
+      ctx.save();
+      ctx.fillStyle = '#fef08a';
+      ctx.shadowColor = '#fbbf24';
+      ctx.shadowBlur = 8;
+
+      const pathLeft = [
+        { x: cx - 75, y: cy },
+        { x: blx - 65, y: cy },
+        { x: blx - 65, y: by + 25 },
+        { x: blx, y: by }
+      ];
+
+      const pathRight = [
+        { x: cx + 75, y: cy },
+        { x: brx + 65, y: cy },
+        { x: brx + 65, y: by + 25 },
+        { x: brx, y: by }
+      ];
+
+      const numDots = 8;
+      for (let i = 0; i < numDots; i++) {
+        let t = ((time * speedMult + i / numDots) % 1);
+        if (!isNormal) t = 1 - t;
+
+        const p1 = getPointOnPolyline(pathLeft, t);
+        ctx.beginPath();
+        ctx.arc(p1.x, p1.y, 3, 0, Math.PI * 2);
+        ctx.fill();
+
+        let t2 = 1 - t;
+        const p2 = getPointOnPolyline(pathRight, t2);
+        ctx.beginPath();
+        ctx.arc(p2.x, p2.y, 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.restore();
+    }
+
+    function getPointOnPolyline(pts, t) {
+      const segs = pts.length - 1;
+      const segT = 1 / segs;
+      const idx = Math.min(Math.floor(t / segT), segs - 1);
+      const subT = (t - idx * segT) / segT;
+      const p0 = pts[idx];
+      const p1 = pts[idx + 1];
+      return {
+        x: p0.x + (p1.x - p0.x) * subT,
+        y: p0.y + (p1.y - p0.y) * subT
+      };
+    }
+
+    function drawArmatureAssembly(cx, cy) {
+      const rad = (state.angle * Math.PI) / 180;
+      const cosA = Math.cos(rad);
+      const sinA = Math.sin(rad);
+
+      const armRadius = 110;
+
+      const ax = cx - armRadius * cosA;
+      const ay = cy - armRadius * sinA;
+
+      const bx = cx + armRadius * cosA;
+      const by = cy + armRadius * sinA;
+
+      ctx.save();
+
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([4, 6]);
+      ctx.beginPath();
+      ctx.arc(cx, cy, armRadius, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      ctx.fillStyle = '#334155';
+      ctx.strokeStyle = '#94a3b8';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 18, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      const turns = state.coils;
+      const strokeCount = turns === 10 ? 3 : turns === 20 ? 5 : 7;
+
+      for (let i = 0; i < strokeCount; i++) {
+        const offset = (i - Math.floor(strokeCount / 2)) * 3.5;
+        const nx = -sinA * offset;
+        const ny = cosA * offset;
+
+        const copperGrad = ctx.createLinearGradient(ax, ay, bx, by);
+        copperGrad.addColorStop(0, '#f59e0b');
+        copperGrad.addColorStop(0.5, '#fbbf24');
+        copperGrad.addColorStop(1, '#d97706');
+
+        ctx.strokeStyle = copperGrad;
+        ctx.lineWidth = 3.5;
+        ctx.shadowColor = state.power ? 'rgba(245, 158, 11, 0.5)' : 'transparent';
+        ctx.shadowBlur = state.power ? 8 : 0;
+
+        ctx.beginPath();
+        ctx.moveTo(ax + nx, ay + ny);
+        ctx.lineTo(bx + nx, by + ny);
+        ctx.stroke();
+      }
+
+      drawCoilTerminal(ax, ay, 'A');
+      drawCoilTerminal(bx, by, 'B');
+
+      drawCommutatorAndBrushes(cx, cy + 115, rad);
+
+      ctx.restore();
+    }
+
+    function drawCoilTerminal(x, y, terminalName) {
+      ctx.save();
+      const radius = 15;
+
+      const normAngle = ((state.angle % 360) + 360) % 360;
+      const isNearGap = Math.abs((normAngle % 180) - 90) < 12;
+
+      let isCurrentEntering = false;
+      if (state.power && !isNearGap) {
+        const isCurrentlyOnLeft = x <= canvas.width / 2;
+        if (state.polarity === 'normal') {
+          isCurrentEntering = isCurrentlyOnLeft;
+        } else {
+          isCurrentEntering = !isCurrentlyOnLeft;
+        }
+      }
+
+      ctx.fillStyle = !state.power ? '#475569' : (isCurrentEntering ? '#ef4444' : '#10b981');
+      ctx.beginPath();
+      ctx.arc(x, y, radius, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 14px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+
+      if (!state.power) {
+        ctx.fillText(terminalName, x, y);
+      } else if (isNearGap) {
+        ctx.font = '10px sans-serif';
+        ctx.fillText('斷', x, y);
+      } else if (isCurrentEntering) {
+        ctx.fillText('✕', x, y);
+      } else {
+        ctx.beginPath();
+        ctx.arc(x, y, 4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.restore();
+    }
+
+    function drawCommutatorAndBrushes(cx, cy, rad) {
+      ctx.save();
+
+      const r = 24;
+      const gapAngle = 0.24;
+
+      ctx.translate(cx, cy);
+      ctx.rotate(rad);
+
+      ctx.beginPath();
+      ctx.arc(0, 0, r, gapAngle, Math.PI - gapAngle);
+      ctx.lineWidth = 8;
+      ctx.strokeStyle = '#d97706';
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(0, 0, r, Math.PI + gapAngle, -gapAngle);
+      ctx.lineWidth = 8;
+      ctx.strokeStyle = '#f59e0b';
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(0, 0, r - 6, 0, Math.PI * 2);
+      ctx.fillStyle = '#0f172a';
+      ctx.fill();
+
+      ctx.restore();
+
+      const brushW = 12;
+      const brushH = 18;
+      const bDist = r + 2;
+
+      ctx.save();
+      ctx.fillStyle = '#64748b';
+      ctx.strokeStyle = '#e2e8f0';
+      ctx.lineWidth = 1.5;
+
+      ctx.beginPath();
+      ctx.roundRect(cx - bDist - brushW, cy - brushH / 2, brushW, brushH, 3);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.roundRect(cx + bDist, cy - brushH / 2, brushW, brushH, 3);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.strokeStyle = '#94a3b8';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(cx - bDist - brushW, cy);
+      ctx.lineTo(cx - bDist - brushW - 14, cy);
+      ctx.moveTo(cx + bDist + brushW, cy);
+      ctx.lineTo(cx + bDist + brushW + 14, cy);
+      ctx.stroke();
+
+      ctx.font = '10.5px sans-serif';
+      ctx.fillStyle = '#cbd5e1';
+      ctx.textAlign = 'center';
+      ctx.fillText('左電刷', cx - bDist - 24, cy - 14);
+      ctx.fillText('右電刷', cx + bDist + 24, cy - 14);
+
+      ctx.font = 'bold 11px sans-serif';
+      ctx.fillStyle = '#fbbf24';
+      ctx.fillText('半圓形集電環（隨線圈同步旋轉換向）', cx, cy + 34);
+
+      ctx.restore();
+    }
+
+    function drawForceVectors(cx, cy) {
+      const rad = (state.angle * Math.PI) / 180;
+      const cosA = Math.cos(rad);
+      const sinA = Math.sin(rad);
+      const armRadius = 110;
+
+      const normAngle = ((state.angle % 360) + 360) % 360;
+      const isNearGap = Math.abs((normAngle % 180) - 90) < 12;
+      if (isNearGap) return;
+
+      const ax = cx - armRadius * cosA;
+      const ay = cy - armRadius * sinA;
+      const bx = cx + armRadius * cosA;
+      const by = cy + armRadius * sinA;
+
+      const isLeftUp = state.direction === 1;
+
+      ctx.save();
+      const aIsLeft = ax <= cx;
+      const aDirY = aIsLeft ? (isLeftUp ? -1 : 1) : (isLeftUp ? 1 : -1);
+      drawSingleForceArrow(ax, ay, aDirY, aDirY === -1 ? '#10b981' : '#f43f5e', aDirY === -1 ? '推力 F (向上)' : '推力 F (向下)');
+
+      const bIsLeft = bx <= cx;
+      const bDirY = bIsLeft ? (isLeftUp ? -1 : 1) : (isLeftUp ? 1 : -1);
+      drawSingleForceArrow(bx, by, bDirY, bDirY === -1 ? '#10b981' : '#f43f5e', bDirY === -1 ? '推力 F (向上)' : '推力 F (向下)');
+
+      ctx.restore();
+    }
+
+    function drawSingleForceArrow(x, y, dirY, color, label) {
+      ctx.save();
+      const arrowLen = 50;
+      const targetY = y + dirY * arrowLen;
+
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 4;
+      ctx.shadowColor = color;
+      ctx.shadowBlur = 10;
+
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x, targetY);
+      ctx.stroke();
+
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.moveTo(x, targetY);
+      ctx.lineTo(x - 8, targetY - dirY * 12);
+      ctx.lineTo(x + 8, targetY - dirY * 12);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.font = 'bold 11px sans-serif';
+      ctx.fillStyle = color;
+      ctx.textAlign = 'center';
+      ctx.fillText(label, x, targetY + dirY * 15);
+
+      ctx.restore();
+    }
+
+    function drawHandRuleHelper(cx, cy) {
+      ctx.save();
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.92)';
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.5)';
+      ctx.lineWidth = 1.5;
+
+      const boxW = 210;
+      const boxH = 95;
+      const bx = cx - boxW / 2;
+      const by = 22;
+
+      ctx.beginPath();
+      ctx.roundRect(bx, by, boxW, boxH, 10);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.font = 'bold 11px sans-serif';
+      ctx.fillStyle = '#38bdf8';
+      ctx.textAlign = 'left';
+      ctx.fillText('✋ 右手開掌定則（國小易記口訣）：', bx + 12, by + 20);
+
+      ctx.font = '10.5px sans-serif';
+      ctx.fillStyle = '#cbd5e1';
+      ctx.fillText('1. 大拇指：電流方向 (I)', bx + 12, by + 40);
+      ctx.fillText('2. 四指伸直：磁場方向 (N→S)', bx + 12, by + 58);
+      ctx.fillText('3. 手心推向：導線受力方向 (F)', bx + 12, by + 76);
+
+      ctx.restore();
+    }
+
+    function animate() {
+      computeMotorPhysics();
+      drawMotor();
+      requestAnimationFrame(animate);
+    }
+
+    const powerSwitch = document.getElementById('powerSwitch');
+    powerSwitch.addEventListener('click', () => {
+      state.power = !state.power;
+      powerSwitch.classList.toggle('on', state.power);
+      sound.playSwitchClick(state.power);
+    });
+
+    document.querySelectorAll('#batteryControl .seg-item').forEach(item => {
+      item.addEventListener('click', () => {
+        document.querySelectorAll('#batteryControl .seg-item').forEach(el => el.classList.remove('active'));
+        item.classList.add('active');
+        state.batteries = parseInt(item.dataset.val, 10);
+        document.getElementById('batteryHint').textContent = `${state.batteries} 顆 (${(state.batteries * 1.5).toFixed(1)}V)`;
+        sound.playSwitchClick(true);
+      });
+    });
+
+    document.querySelectorAll('#polarityControl .seg-item').forEach(item => {
+      item.addEventListener('click', () => {
+        document.querySelectorAll('#polarityControl .seg-item').forEach(el => el.classList.remove('active'));
+        item.classList.add('active');
+        state.polarity = item.dataset.val;
+        document.getElementById('polarityHint').textContent = state.polarity === 'normal' ? '正向 (左+ 右-)' : '反接 (左- 右+)';
+        sound.playSwitchClick(true);
+      });
+    });
+
+    document.querySelectorAll('#magnetControl .seg-item').forEach(item => {
+      item.addEventListener('click', () => {
+        document.querySelectorAll('#magnetControl .seg-item').forEach(el => el.classList.remove('active'));
+        item.classList.add('active');
+        state.magnet = item.dataset.val;
+        document.getElementById('magnetHint').textContent = state.magnet === 'NS' ? '左 N 極 / 右 S 極' : '左 S 極 / 右 N 極';
+        sound.playSwitchClick(true);
+      });
+    });
+
+    document.querySelectorAll('#coilsControl .seg-item').forEach(item => {
+      item.addEventListener('click', () => {
+        document.querySelectorAll('#coilsControl .seg-item').forEach(el => el.classList.remove('active'));
+        item.classList.add('active');
+        state.coils = parseInt(item.dataset.val, 10);
+        document.getElementById('coilsHint').textContent = `${state.coils} 圈 (${state.coils === 10 ? '磁力較弱' : state.coils === 20 ? '標準力矩' : '強力轉動'})`;
+        sound.playSwitchClick(true);
+      });
+    });
+
+    document.querySelectorAll('#speedButtons .speed-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('#speedButtons .speed-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const sp = btn.dataset.speed;
+        state.speedMode = sp === 'pause' ? 0 : parseFloat(sp);
+      });
+    });
+
+    const angleSlider = document.getElementById('angleSlider');
+    angleSlider.addEventListener('input', (e) => {
+      state.isDraggingSlider = true;
+      state.angle = parseFloat(e.target.value);
+      state.angularSpeed = 0;
+    });
+    angleSlider.addEventListener('change', () => {
+      state.isDraggingSlider = false;
+    });
+
+    document.getElementById('chkMagneticLines').addEventListener('change', (e) => {
+      state.showMagneticLines = e.target.checked;
+    });
+    document.getElementById('chkCurrentFlow').addEventListener('change', (e) => {
+      state.showCurrentFlow = e.target.checked;
+    });
+    document.getElementById('chkForceVectors').addEventListener('change', (e) => {
+      state.showForceVectors = e.target.checked;
+    });
+    document.getElementById('chkHandRule').addEventListener('change', (e) => {
+      state.showHandRule = e.target.checked;
+    });
+
+    const btnSoundToggle = document.getElementById('btnSoundToggle');
+    const soundIcon = document.getElementById('soundIcon');
+    btnSoundToggle.addEventListener('click', () => {
+      state.soundEnabled = !state.soundEnabled;
+      soundIcon.textContent = state.soundEnabled ? '🔊' : '🔇';
+      if (!state.soundEnabled && sound.motorGain && sound.ctx) {
+        sound.motorGain.gain.setValueAtTime(0, sound.ctx.currentTime);
+      }
+    });
+
+    const modalKnowledge = document.getElementById('modalKnowledge');
+    document.getElementById('btnKnowledge').addEventListener('click', () => {
+      modalKnowledge.classList.add('show');
+    });
+    document.getElementById('btnCloseKnowledge').addEventListener('click', () => {
+      modalKnowledge.classList.remove('show');
+    });
+
+    const modalQuiz = document.getElementById('modalQuiz');
+    const quizContainer = document.getElementById('quizContainer');
+    document.getElementById('btnQuiz').addEventListener('click', () => {
+      renderQuizQuestions();
+      modalQuiz.classList.add('show');
+    });
+    document.getElementById('btnCloseQuiz').addEventListener('click', () => {
+      modalQuiz.classList.remove('show');
+    });
+
+    [modalKnowledge, modalQuiz].forEach(modal => {
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+          modal.classList.remove('show');
+        }
+      });
+    });
+
+    const quizData = [
+      {
+        question: "1. 想要讓馬達線圈轉動得更快，下列哪一個操作方式是正確的？",
+        options: [
+          "將串聯的電池數量由 1 顆增加為 2 顆",
+          "把磁鐵換成磁力更弱的磁鐵",
+          "減少線圈纏繞的圈數",
+          "將電池的正負極反接"
+        ],
+        correct: 0,
+        explanation: "正確！增加串聯電池數量可以加大電壓與電流，讓電磁鐵線圈產生的磁力更強，旋轉速度就會明顯變快！"
+      },
+      {
+        question: "2. 馬達中的「半圓形集電環（換向器）」最核心的任務是什麼？",
+        options: [
+          "增加馬達整體的重量讓它更穩固",
+          "每轉半圈（180°）自動改變電流方向，讓線圈能持續同方向旋轉",
+          "防止電池過熱耗電",
+          "把馬達的交流電轉變成直流電"
+        ],
+        correct: 1,
+        explanation: "太棒了！若沒有半圓形集電環，線圈轉到垂直位置就會因為受力相斥而卡住。集電環每半圈對調一次電流方向，配合慣性就能一直同方向轉動！"
+      },
+      {
+        question: "3. 若僅將電池的正負極對調反接，馬達會發生什麼變化？",
+        options: [
+          "馬達轉速立即加快兩倍",
+          "馬達會直接冒煙燒毀",
+          "馬達的旋轉方向會變成相反方向",
+          "馬達完全不會受到任何影響"
+        ],
+        correct: 2,
+        explanation: "答對了！改變電池正負極方向，會讓導線內的電流方向顛倒，導致磁力受力方向也顛倒，因此旋轉方向會剛好相反！"
+      },
+      {
+        question: "4. 【國小大考魔王題】如果同時將「電池正負極」顛倒，而且也將「兩側磁鐵極性」顛倒對調，馬達的旋轉方向會？",
+        options: [
+          "轉動方向維持不變",
+          "轉動方向顛倒相反",
+          "馬達會卡住無法旋轉",
+          "一下順時針、一下逆時針反覆擺動"
+        ],
+        correct: 0,
+        explanation: "厲害！滿分！同時顛倒電流方向（負負得正）與磁場方向，受力方向會歷經兩次相反，結果就是『旋轉方向維持不變』，這是考試最常出現的陷阱題！"
+      }
+    ];
+
+    function renderQuizQuestions() {
+      quizContainer.innerHTML = '';
+      quizData.forEach((q, qIndex) => {
+        const card = document.createElement('div');
+        card.className = 'quiz-card';
+
+        const qTitle = document.createElement('div');
+        qTitle.className = 'quiz-question';
+        qTitle.textContent = q.question;
+        card.appendChild(qTitle);
+
+        const optionsBox = document.createElement('div');
+        optionsBox.className = 'quiz-options';
+
+        const feedbackBox = document.createElement('div');
+        feedbackBox.className = 'quiz-feedback';
+
+        q.options.forEach((optText, optIndex) => {
+          const optBtn = document.createElement('div');
+          optBtn.className = 'quiz-opt';
+          optBtn.textContent = optText;
+
+          optBtn.addEventListener('click', () => {
+            if (optionsBox.dataset.answered) return;
+            optionsBox.dataset.answered = 'true';
+
+            if (optIndex === q.correct) {
+              optBtn.classList.add('correct');
+              feedbackBox.className = 'quiz-feedback show success';
+              feedbackBox.innerHTML = `🎉 <strong>答對了！</strong> ${q.explanation}`;
+              sound.playSwitchClick(true);
+            } else {
+              optBtn.classList.add('wrong');
+              optionsBox.children[q.correct].classList.add('correct');
+              feedbackBox.className = 'quiz-feedback show error';
+              feedbackBox.innerHTML = `❌ <strong>再想一下喔！</strong> ${q.explanation}`;
+              sound.playSwitchClick(false);
+            }
+          });
+
+          optionsBox.appendChild(optBtn);
+        });
+
+        card.appendChild(optionsBox);
+        card.appendChild(feedbackBox);
+        quizContainer.appendChild(card);
+      });
+    }
+
+    window.addEventListener('load', () => {
+      resizeCanvas();
+      animate();
+    });
+  </script>
+</body>
+</html>
