@@ -1,0 +1,1352 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>國小一年級可視化倒數計時器 ⏰</title>
+  <style>
+    :root {
+      --primary: #ff6b6b;
+      --primary-hover: #fa5252;
+      --secondary: #4dabf7;
+      --accent-yellow: #ffd43b;
+      --accent-green: #51cf66;
+      --accent-purple: #cc5de8;
+      --bg-cream: #f8f9fa;
+      --text-main: #2b2d42;
+      --text-muted: #868e96;
+      --card-shadow: 0 16px 36px rgba(0, 0, 0, 0.08);
+      --bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      font-family: system-ui, -apple-system, "Microsoft JhengHei", "Noto Sans TC", sans-serif;
+    }
+
+    body {
+      background: linear-gradient(135deg, #eef2f7 0%, #e0e7ff 50%, #fef3c7 100%);
+      min-height: 100vh;
+      color: var(--text-main);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px;
+      overflow-x: hidden;
+    }
+
+    /* 頂部功能列 */
+    header {
+      width: 100%;
+      max-width: 960px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      margin-bottom: 8px;
+    }
+
+    .app-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-badge {
+      width: 50px;
+      height: 50px;
+      background: linear-gradient(135deg, #ff922b, #ff6b6b);
+      border-radius: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      box-shadow: 0 8px 18px rgba(255, 107, 107, 0.35);
+      animation: float-logo 3s ease-in-out infinite alternate;
+    }
+
+    @keyframes float-logo {
+      0% { transform: translateY(0px) rotate(-3deg); }
+      100% { transform: translateY(-5px) rotate(4deg); }
+    }
+
+    .title-texts h1 {
+      font-size: 1.5rem;
+      font-weight: 900;
+      color: #2b2d42;
+      letter-spacing: -0.5px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .title-texts p {
+      font-size: 0.85rem;
+      color: #64748b;
+      font-weight: 600;
+    }
+
+    .top-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn-icon {
+      background: #ffffff;
+      border: 2px solid #e2e8f0;
+      border-radius: 16px;
+      width: 46px;
+      height: 46px;
+      font-size: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s var(--bounce);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .btn-icon:hover {
+      transform: translateY(-2px) scale(1.05);
+      border-color: #cbd5e1;
+    }
+
+    .btn-icon:active {
+      transform: scale(0.95);
+    }
+
+    /* 主舞台卡片 */
+    .main-container {
+      width: 100%;
+      max-width: 960px;
+      background: rgba(255, 255, 255, 0.94);
+      backdrop-filter: blur(16px);
+      border-radius: 36px;
+      border: 4px solid #ffffff;
+      box-shadow: var(--card-shadow), 0 0 0 1px rgba(0, 0, 0, 0.04);
+      padding: 24px 30px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      position: relative;
+    }
+
+    /* 主題模式切換籤 (給小一生最愛的卡通三大模式) */
+    .theme-nav {
+      display: flex;
+      background: #f1f5f9;
+      border-radius: 20px;
+      padding: 6px;
+      gap: 8px;
+    }
+
+    .theme-tab {
+      padding: 10px 22px;
+      border-radius: 16px;
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: #64748b;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.25s var(--bounce);
+      border: none;
+      background: transparent;
+      outline: none;
+    }
+
+    .theme-tab:hover {
+      color: #334155;
+    }
+
+    .theme-tab.active {
+      background: #ffffff;
+      color: #1e293b;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+      transform: scale(1.02);
+    }
+
+    /* 核心可視化動畫畫布舞台 */
+    .visualizer-wrapper {
+      position: relative;
+      width: 320px;
+      height: 320px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 4px 0;
+    }
+
+    #stageCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      border-radius: 50%;
+    }
+
+    /* 畫布正中央的大數字時間 (圓盤中央) */
+    .center-time-display {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      background: rgba(255, 255, 255, 0.92);
+      width: 160px;
+      height: 160px;
+      border-radius: 50%;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+      border: 4px solid #f8fafc;
+    }
+
+    .time-digits {
+      font-size: 2.5rem;
+      font-weight: 900;
+      letter-spacing: 1px;
+      color: #1e293b;
+      line-height: 1.1;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .time-unit-label {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: #94a3b8;
+      margin-top: 2px;
+    }
+
+    /* 兒童友善的心情激勵話語小標籤 */
+    .status-capsule {
+      padding: 10px 24px;
+      border-radius: 40px;
+      font-size: 1.05rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: all 0.3s var(--bounce);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
+    }
+
+    .status-capsule.green {
+      background: #e6fcf5;
+      color: #0ca678;
+      border: 2px solid #b2f2bb;
+    }
+
+    .status-capsule.yellow {
+      background: #fff9db;
+      color: #f08c00;
+      border: 2px solid #ffec99;
+      animation: pulse-warn 1.5s infinite;
+    }
+
+    .status-capsule.red {
+      background: #ffe3e3;
+      color: #e03131;
+      border: 2px solid #ffc9c9;
+      animation: pulse-danger 0.7s infinite alternate;
+    }
+
+    @keyframes pulse-warn {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.03); }
+    }
+
+    @keyframes pulse-danger {
+      0% { transform: scale(1); }
+      100% { transform: scale(1.06); }
+    }
+
+    /* 控制按鍵群 (超大開始/暫停鍵，小一生一按就中) */
+    .control-deck {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 18px;
+      margin-top: 4px;
+    }
+
+    .btn-giant {
+      height: 72px;
+      padding: 0 44px;
+      border-radius: 36px;
+      font-size: 1.45rem;
+      font-weight: 900;
+      color: #ffffff;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+      transition: all 0.25s var(--bounce);
+      outline: none;
+    }
+
+    .btn-giant.btn-start {
+      background: linear-gradient(135deg, #40c057, #2f9e44);
+      box-shadow: 0 10px 24px rgba(47, 158, 68, 0.4);
+    }
+
+    .btn-giant.btn-start:hover {
+      transform: translateY(-3px) scale(1.03);
+      box-shadow: 0 14px 28px rgba(47, 158, 68, 0.5);
+    }
+
+    .btn-giant.btn-pause {
+      background: linear-gradient(135deg, #ff922b, #f76707);
+      box-shadow: 0 10px 24px rgba(247, 103, 7, 0.4);
+    }
+
+    .btn-giant.btn-pause:hover {
+      transform: translateY(-3px) scale(1.03);
+      box-shadow: 0 14px 28px rgba(247, 103, 7, 0.5);
+    }
+
+    .btn-giant:active {
+      transform: translateY(2px) scale(0.96);
+    }
+
+    .btn-circle {
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      border: 3px solid #e2e8f0;
+      background: #ffffff;
+      font-size: 22px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s var(--bounce);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+      color: #475569;
+    }
+
+    .btn-circle:hover {
+      border-color: #cbd5e1;
+      transform: translateY(-2px) scale(1.06);
+    }
+
+    .btn-circle:active {
+      transform: scale(0.92);
+    }
+
+    /* 調整時間的微調按鈕 (+1分 / -1分) */
+    .adjust-group {
+      display: flex;
+      gap: 12px;
+    }
+
+    .btn-pill {
+      background: #f1f5f9;
+      border: 2px solid #e2e8f0;
+      border-radius: 20px;
+      padding: 8px 16px;
+      font-size: 0.9rem;
+      font-weight: 800;
+      color: #475569;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+
+    .btn-pill:hover {
+      background: #e2e8f0;
+      transform: translateY(-1px);
+    }
+
+    .btn-pill:active {
+      transform: scale(0.95);
+    }
+
+    /* 國小一年級專用：課堂生活常態情境快捷欄 */
+    .presets-container {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      border-top: 2px dashed #e2e8f0;
+      padding-top: 18px;
+    }
+
+    .presets-title {
+      font-size: 0.9rem;
+      font-weight: 800;
+      color: #64748b;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .preset-chips {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+    }
+
+    .chip-btn {
+      background: #ffffff;
+      border: 2.5px solid #e2e8f0;
+      border-radius: 22px;
+      padding: 10px 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 800;
+      font-size: 0.92rem;
+      color: #334155;
+      transition: all 0.25s var(--bounce);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
+    }
+
+    .chip-btn:hover {
+      border-color: #38bdf8;
+      background: #f0f9ff;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 18px rgba(56, 189, 248, 0.2);
+    }
+
+    .chip-btn.active {
+      background: linear-gradient(135deg, #0284c7, #2563eb);
+      color: #ffffff;
+      border-color: transparent;
+      box-shadow: 0 6px 20px rgba(37, 99, 235, 0.35);
+    }
+
+    .chip-icon {
+      font-size: 1.25rem;
+    }
+
+    /* 底部友善頁尾 */
+    footer {
+      font-size: 0.82rem;
+      color: #94a3b8;
+      font-weight: 600;
+      text-align: center;
+      padding: 10px;
+    }
+
+    /* 完成派對彈窗 Modal */
+    .party-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.65);
+      backdrop-filter: blur(10px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .party-overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .party-card {
+      background: #ffffff;
+      border-radius: 36px;
+      padding: 40px 36px;
+      text-align: center;
+      max-width: 440px;
+      width: 90%;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.3);
+      transform: scale(0.8) translateY(20px);
+      transition: transform 0.4s var(--bounce);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .party-overlay.show .party-card {
+      transform: scale(1) translateY(0);
+    }
+
+    .party-badge {
+      width: 100px;
+      height: 100px;
+      background: linear-gradient(135deg, #ffd43b, #ff922b);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 54px;
+      box-shadow: 0 10px 25px rgba(255, 146, 43, 0.4);
+      animation: bounce-party 1s infinite alternate;
+    }
+
+    @keyframes bounce-party {
+      0% { transform: translateY(0) scale(1); }
+      100% { transform: translateY(-10px) scale(1.1); }
+    }
+
+    .party-card h2 {
+      font-size: 1.8rem;
+      font-weight: 900;
+      color: #1e293b;
+    }
+
+    .party-card p {
+      font-size: 1.05rem;
+      color: #64748b;
+      font-weight: 700;
+      line-height: 1.5;
+    }
+
+    .btn-party-close {
+      margin-top: 10px;
+      background: linear-gradient(135deg, #ff6b6b, #fa5252);
+      color: white;
+      font-size: 1.2rem;
+      font-weight: 900;
+      border: none;
+      padding: 14px 38px;
+      border-radius: 30px;
+      cursor: pointer;
+      box-shadow: 0 8px 20px rgba(250, 82, 82, 0.4);
+      transition: all 0.2s var(--bounce);
+    }
+
+    .btn-party-close:hover {
+      transform: translateY(-2px) scale(1.04);
+    }
+
+    /* 彩帶 Canvas (全螢幕特效) */
+    #confettiCanvas {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 101;
+    }
+
+    /* 回首頁按鈕 */
+    .btn-home {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      background: #ffffff;
+      border: 2px solid #e2e8f0;
+      border-radius: 16px;
+      font-size: 0.9rem;
+      font-weight: 800;
+      color: #475569;
+      text-decoration: none;
+      transition: all 0.2s var(--bounce);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+    }
+
+    .btn-home:hover {
+      transform: translateY(-2px);
+      border-color: #38bdf8;
+      color: #0284c7;
+    }
+
+    @media (max-width: 600px) {
+      .main-container {
+        padding: 20px 16px;
+        border-radius: 28px;
+      }
+      .visualizer-wrapper {
+        width: 270px;
+        height: 270px;
+      }
+      .center-time-display {
+        width: 135px;
+        height: 135px;
+      }
+      .time-digits {
+        font-size: 2.1rem;
+      }
+      .btn-giant {
+        height: 64px;
+        padding: 0 32px;
+        font-size: 1.25rem;
+      }
+      .chip-btn {
+        padding: 8px 14px;
+        font-size: 0.85rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 彩帶全螢幕特效畫布 -->
+  <canvas id="confettiCanvas"></canvas>
+
+  <!-- 頂部功能導航 -->
+  <header>
+    <div class="app-title">
+      <div class="logo-badge">⏳</div>
+      <div class="title-texts">
+        <h1>小學一年級・快樂倒數鐘</h1>
+        <p>看得見的時間・讓等待與專注變好玩！</p>
+      </div>
+    </div>
+    <div class="top-actions">
+      <a href="index.html" class="btn-home" title="返回首頁">
+        <span>🏠</span>
+        <span>回首頁</span>
+      </a>
+      <button class="btn-icon" id="btnSoundToggle" title="開關聲音">
+        <span id="soundIcon">🔊</span>
+      </button>
+      <button class="btn-icon" id="btnFullscreen" title="全螢幕展示">
+        <span>⛶</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- 主舞台 -->
+  <main class="main-container">
+
+    <!-- 主題選擇切換標籤 -->
+    <div class="theme-nav">
+      <button class="theme-tab active" data-theme="clock">
+        <span>🌈</span>
+        <span>經典彩盤鐘</span>
+      </button>
+      <button class="theme-tab" data-theme="rocket">
+        <span>🚀</span>
+        <span>太空火箭升空</span>
+      </button>
+      <button class="theme-tab" data-theme="apple">
+        <span>🍎</span>
+        <span>神奇蘋果樹</span>
+      </button>
+    </div>
+
+    <!-- 視覺化畫布 + 核心時間展示 -->
+    <div class="visualizer-wrapper">
+      <canvas id="stageCanvas" width="640" height="640"></canvas>
+
+      <!-- 圓心大數字 (小一生一目了然) -->
+      <div class="center-time-display">
+        <div class="time-digits" id="timeDisplay">05:00</div>
+        <div class="time-unit-label" id="timeSubLabel">剩餘時間</div>
+      </div>
+    </div>
+
+    <!-- 心情激勵小膠囊 -->
+    <div class="status-capsule green" id="statusCapsule">
+      <span id="statusIcon">🌱</span>
+      <span id="statusText">時間好充裕，我們慢慢做喔！</span>
+    </div>
+
+    <!-- 巨型操作按鈕 -->
+    <div class="control-deck">
+      <button class="btn-circle" id="btnReset" title="重新開始">
+        <span>🔄</span>
+      </button>
+
+      <button class="btn-giant btn-start" id="btnMainToggle">
+        <span id="mainBtnIcon">▶</span>
+        <span id="mainBtnText">開始計時</span>
+      </button>
+
+      <button class="btn-circle" id="btnAdd30s" title="增加30秒">
+        <span style="font-size: 15px; font-weight: 900;">+30s</span>
+      </button>
+    </div>
+
+    <!-- 微調時間小按鈕 -->
+    <div class="adjust-group">
+      <button class="btn-pill" id="btnMinus1m">➖ 減少 1 分鐘</button>
+      <button class="btn-pill" id="btnAdd1m">➕ 增加 1 分鐘</button>
+    </div>
+
+    <!-- 一年級常用情境快速按鈕 -->
+    <div class="presets-container">
+      <div class="presets-title">
+        <span>🎒 一年級課堂好幫手（點一下直接設定）：</span>
+      </div>
+      <div class="preset-chips">
+        <button class="chip-btn" data-seconds="60">
+          <span class="chip-icon">🎒</span>
+          <span>1 分鐘・快收書包</span>
+        </button>
+        <button class="chip-btn" data-seconds="180">
+          <span class="chip-icon">🪥</span>
+          <span>3 分鐘・護眼潔牙</span>
+        </button>
+        <button class="chip-btn active" data-seconds="300">
+          <span class="chip-icon">🤝</span>
+          <span>5 分鐘・小組分享</span>
+        </button>
+        <button class="chip-btn" data-seconds="600">
+          <span class="chip-icon">📖</span>
+          <span>10 分鐘・下課休息</span>
+        </button>
+        <button class="chip-btn" data-seconds="900">
+          <span class="chip-icon">✏️</span>
+          <span>15 分鐘・專注寫字</span>
+        </button>
+      </div>
+    </div>
+
+  </main>
+
+  <footer>
+    專為國小一年級設計：色彩漸消視覺圓盤・專注培養・直覺無壓力
+  </footer>
+
+  <!-- 完成派對彈窗 -->
+  <div class="party-overlay" id="partyModal">
+    <div class="party-card">
+      <div class="party-badge">🏆</div>
+      <h2>🎉 時間到囉！太厲害了！</h2>
+      <p id="partyMessage">你完成了任務，給自己拍拍手！<br>現在可以休息一下眼睛囉！✨</p>
+      <button class="btn-party-close" id="btnCloseParty">再來一次！⭐</button>
+    </div>
+  </div>
+
+  <script>
+    /* ========================================================
+     * 1. 核心狀態管理
+     * ======================================================== */
+    const state = {
+      totalSeconds: 300,      // 設定的總秒數 (預設5分鐘)
+      remainingSeconds: 300,  // 當前剩餘秒數
+      isRunning: false,       // 是否在計時中
+      theme: 'clock',         // clock (彩盤), rocket (火箭), apple (蘋果樹)
+      soundEnabled: true,     // 音效
+      timerInterval: null,    // 計時器 setInterval
+      confettiParticles: [],  // 彩帶粒子
+      animationFrameId: null  // 動畫 frame
+    };
+
+    /* ========================================================
+     * 2. 趣味音效系統 (Web Audio API)
+     * ======================================================== */
+    class AudioMaster {
+      constructor() {
+        this.ctx = null;
+      }
+
+      init() {
+        if (!this.ctx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          if (AudioContext) this.ctx = new AudioContext();
+        }
+        if (this.ctx && this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      }
+
+      playPop() {
+        if (!state.soundEnabled) return;
+        this.init();
+        if (!this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(450, this.ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(800, this.ctx.currentTime + 0.08);
+        gain.gain.setValueAtTime(0.25, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.08);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.09);
+      }
+
+      playTick() {
+        if (!state.soundEnabled) return;
+        this.init();
+        if (!this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(880, this.ctx.currentTime);
+        gain.gain.setValueAtTime(0.08, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.04);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.05);
+      }
+
+      playUrgentTick() {
+        if (!state.soundEnabled) return;
+        this.init();
+        if (!this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(650, this.ctx.currentTime);
+        gain.gain.setValueAtTime(0.18, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.1);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.11);
+      }
+
+      playFanfare() {
+        if (!state.soundEnabled) return;
+        this.init();
+        if (!this.ctx) return;
+
+        const notes = [523.25, 659.25, 783.99, 1046.50, 1318.51];
+        notes.forEach((freq, idx) => {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq, this.ctx.currentTime + idx * 0.12);
+          gain.gain.setValueAtTime(0, this.ctx.currentTime + idx * 0.12);
+          gain.gain.linearRampToValueAtTime(0.3, this.ctx.currentTime + idx * 0.12 + 0.03);
+          gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + idx * 0.12 + 0.4);
+
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(this.ctx.currentTime + idx * 0.12);
+          osc.stop(this.ctx.currentTime + idx * 0.12 + 0.45);
+        });
+      }
+    }
+
+    const audio = new AudioMaster();
+
+    /* ========================================================
+     * 3. 畫布渲染引擎 (三大可視化主題)
+     * ======================================================== */
+    const stageCanvas = document.getElementById('stageCanvas');
+    const stageCtx = stageCanvas.getContext('2d');
+
+    function renderStage() {
+      const W = stageCanvas.width;
+      const H = stageCanvas.height;
+      const cx = W / 2;
+      const cy = H / 2;
+      const radius = 270;
+
+      stageCtx.clearRect(0, 0, W, H);
+
+      const progress = state.totalSeconds > 0 ? (state.remainingSeconds / state.totalSeconds) : 0;
+
+      if (state.theme === 'clock') {
+        drawClockDisk(stageCtx, cx, cy, radius, progress);
+      } else if (state.theme === 'rocket') {
+        drawRocketTheme(stageCtx, cx, cy, radius, progress);
+      } else if (state.theme === 'apple') {
+        drawAppleTheme(stageCtx, cx, cy, radius, progress);
+      }
+
+      requestAnimationFrame(renderStage);
+    }
+
+    function drawClockDisk(ctx, cx, cy, r, progress) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.fillStyle = '#f1f5f9';
+      ctx.fill();
+
+      for (let i = 0; i < 12; i++) {
+        const ang = (i * Math.PI) / 6;
+        const x1 = cx + Math.cos(ang) * (r - 18);
+        const y1 = cy + Math.sin(ang) * (r - 18);
+        const x2 = cx + Math.cos(ang) * (r - 6);
+        const y2 = cy + Math.sin(ang) * (r - 6);
+        ctx.strokeStyle = '#cbd5e1';
+        ctx.lineWidth = i % 3 === 0 ? 5 : 2.5;
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+      }
+
+      if (progress > 0) {
+        const startAngle = -Math.PI / 2;
+        const endAngle = startAngle + (Math.PI * 2 * progress);
+
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.arc(cx, cy, r, startAngle, endAngle, false);
+        ctx.closePath();
+
+        let grad = ctx.createLinearGradient(cx - r, cy - r, cx + r, cy + r);
+        if (progress > 0.3) {
+          grad.addColorStop(0, '#38bdf8');
+          grad.addColorStop(1, '#4ade80');
+        } else if (progress > 0.15) {
+          grad.addColorStop(0, '#facc15');
+          grad.addColorStop(1, '#fb923c');
+        } else {
+          grad.addColorStop(0, '#f87171');
+          grad.addColorStop(1, '#ef4444');
+        }
+
+        ctx.fillStyle = grad;
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.12)';
+        ctx.shadowBlur = 12;
+        ctx.fill();
+
+        const tipX = cx + Math.cos(endAngle) * (r - 14);
+        const tipY = cy + Math.sin(endAngle) * (r - 14);
+        ctx.beginPath();
+        ctx.arc(tipX, tipY, 10, 0, Math.PI * 2);
+        ctx.fillStyle = '#ffffff';
+        ctx.shadowBlur = 8;
+        ctx.shadowColor = '#ffffff';
+        ctx.fill();
+      }
+
+      ctx.shadowBlur = 0;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 14;
+      ctx.stroke();
+
+      ctx.restore();
+    }
+
+    function drawRocketTheme(ctx, cx, cy, r, progress) {
+      ctx.save();
+      const skyGrad = ctx.createRadialGradient(cx, cy, 30, cx, cy, r);
+      skyGrad.addColorStop(0, '#1e1b4b');
+      skyGrad.addColorStop(1, '#090d16');
+      ctx.fillStyle = skyGrad;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.fill();
+
+      const t = performance.now() * 0.002;
+      for (let i = 0; i < 24; i++) {
+        const sx = cx + Math.sin(i * 137.5) * (r * 0.85);
+        const sy = cy + Math.cos(i * 93.3) * (r * 0.85);
+        const alpha = 0.3 + 0.7 * Math.sin(t + i);
+        ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+        ctx.beginPath();
+        ctx.arc(sx, sy, (i % 3) + 1.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      const startAngle = -Math.PI / 2;
+      const endAngle = startAngle + (Math.PI * 2 * progress);
+      ctx.beginPath();
+      ctx.arc(cx, cy, r - 18, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
+      ctx.lineWidth = 16;
+      ctx.stroke();
+
+      if (progress > 0) {
+        ctx.beginPath();
+        ctx.arc(cx, cy, r - 18, startAngle, endAngle);
+        ctx.strokeStyle = '#38bdf8';
+        ctx.lineWidth = 16;
+        ctx.lineCap = 'round';
+        ctx.shadowColor = '#0284c7';
+        ctx.shadowBlur = 15;
+        ctx.stroke();
+      }
+
+      const currentAngle = startAngle + (Math.PI * 2 * progress);
+      const rocketDist = r - 18;
+      const rx = cx + Math.cos(currentAngle) * rocketDist;
+      const ry = cy + Math.sin(currentAngle) * rocketDist;
+
+      ctx.save();
+      ctx.translate(rx, ry);
+      ctx.rotate(currentAngle + Math.PI / 2);
+
+      if (state.isRunning) {
+        ctx.beginPath();
+        ctx.moveTo(-7, 14);
+        ctx.lineTo(0, 24 + Math.sin(t * 15) * 5);
+        ctx.lineTo(7, 14);
+        ctx.fillStyle = '#ff6b6b';
+        ctx.fill();
+      }
+
+      ctx.beginPath();
+      ctx.roundRect(-10, -18, 20, 32, 8);
+      ctx.fillStyle = '#ffffff';
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.moveTo(-10, -10);
+      ctx.lineTo(0, -26);
+      ctx.lineTo(10, -10);
+      ctx.fillStyle = '#ef4444';
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(0, -2, 5, 0, Math.PI * 2);
+      ctx.fillStyle = '#38bdf8';
+      ctx.fill();
+      ctx.restore();
+
+      ctx.restore();
+    }
+
+    function drawAppleTheme(ctx, cx, cy, r, progress) {
+      ctx.save();
+      const treeBg = ctx.createLinearGradient(cx, cy - r, cx, cy + r);
+      treeBg.addColorStop(0, '#e0f2fe');
+      treeBg.addColorStop(0.65, '#fef9c3');
+      treeBg.addColorStop(1, '#bbf7d0');
+      ctx.fillStyle = treeBg;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.fill();
+
+      const startAngle = -Math.PI / 2;
+      const endAngle = startAngle + (Math.PI * 2 * progress);
+      ctx.beginPath();
+      ctx.arc(cx, cy, r - 16, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(74, 222, 128, 0.2)';
+      ctx.lineWidth = 14;
+      ctx.stroke();
+
+      if (progress > 0) {
+        ctx.beginPath();
+        ctx.arc(cx, cy, r - 16, startAngle, endAngle);
+        ctx.strokeStyle = '#22c55e';
+        ctx.lineWidth = 14;
+        ctx.lineCap = 'round';
+        ctx.stroke();
+      }
+
+      const totalApples = 10;
+      const activeApples = Math.ceil(progress * totalApples);
+
+      for (let i = 0; i < totalApples; i++) {
+        const ang = (i / totalApples) * Math.PI * 2 - Math.PI / 2;
+        const ax = cx + Math.cos(ang) * (r - 58);
+        const ay = cy + Math.sin(ang) * (r - 58);
+
+        if (i < activeApples) {
+          drawCartoonApple(ctx, ax, ay, 18, true);
+        } else {
+          drawCartoonApple(ctx, ax, ay, 14, false);
+        }
+      }
+
+      ctx.restore();
+    }
+
+    function drawCartoonApple(ctx, x, y, size, active) {
+      ctx.save();
+      ctx.translate(x, y);
+
+      if (active) {
+        ctx.beginPath();
+        ctx.arc(-size * 0.45, 0, size * 0.65, 0, Math.PI * 2);
+        ctx.arc(size * 0.45, 0, size * 0.65, 0, Math.PI * 2);
+        ctx.fillStyle = '#ef4444';
+        ctx.shadowColor = 'rgba(239, 68, 68, 0.4)';
+        ctx.shadowBlur = 8;
+        ctx.fill();
+
+        ctx.shadowBlur = 0;
+        ctx.beginPath();
+        ctx.ellipse(3, -size * 0.8, size * 0.35, size * 0.18, Math.PI / 4, 0, Math.PI * 2);
+        ctx.fillStyle = '#22c55e';
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.moveTo(0, -size * 0.3);
+        ctx.lineTo(-2, -size * 0.85);
+        ctx.strokeStyle = '#78350f';
+        ctx.lineWidth = 2.5;
+        ctx.stroke();
+      } else {
+        ctx.beginPath();
+        ctx.arc(0, 0, size * 0.8, 0, Math.PI * 2);
+        ctx.strokeStyle = '#cbd5e1';
+        ctx.setLineDash([3, 4]);
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+
+      ctx.restore();
+    }
+
+    /* ========================================================
+     * 4. 計時邏輯與時間顯示
+     * ======================================================== */
+    function formatTime(totalSec) {
+      const m = Math.floor(totalSec / 60);
+      const s = totalSec % 60;
+      return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    }
+
+    function updateTimeDisplay() {
+      const timeDisplay = document.getElementById('timeDisplay');
+      timeDisplay.textContent = formatTime(state.remainingSeconds);
+      updateStatusCapsule();
+    }
+
+    function updateStatusCapsule() {
+      const capsule = document.getElementById('statusCapsule');
+      const icon = document.getElementById('statusIcon');
+      const text = document.getElementById('statusText');
+
+      const ratio = state.totalSeconds > 0 ? (state.remainingSeconds / state.totalSeconds) : 0;
+
+      if (state.remainingSeconds === 0) {
+        capsule.className = 'status-capsule red';
+        icon.textContent = '🎉';
+        text.textContent = '時間到囉！大功告成！';
+      } else if (state.remainingSeconds <= 10) {
+        capsule.className = 'status-capsule red';
+        icon.textContent = '🔥';
+        text.textContent = `最後倒數 ${state.remainingSeconds} 秒！衝刺衝刺！`;
+      } else if (ratio <= 0.25) {
+        capsule.className = 'status-capsule yellow';
+        icon.textContent = '⚡';
+        text.textContent = '時間快到囉！加把勁收尾！';
+      } else {
+        capsule.className = 'status-capsule green';
+        icon.textContent = '🌱';
+        text.textContent = '時間好充裕，我們專心慢慢做喔！';
+      }
+    }
+
+    function toggleTimer() {
+      if (state.remainingSeconds <= 0) {
+        state.remainingSeconds = state.totalSeconds;
+      }
+
+      state.isRunning = !state.isRunning;
+      updateControlButtons();
+
+      if (state.isRunning) {
+        audio.playPop();
+        startTimerLoop();
+      } else {
+        stopTimerLoop();
+      }
+    }
+
+    function startTimerLoop() {
+      if (state.timerInterval) clearInterval(state.timerInterval);
+
+      state.timerInterval = setInterval(() => {
+        if (state.remainingSeconds > 0) {
+          state.remainingSeconds--;
+          updateTimeDisplay();
+
+          if (state.remainingSeconds > 0 && state.remainingSeconds <= 5) {
+            audio.playUrgentTick();
+          } else {
+            audio.playTick();
+          }
+
+          if (state.remainingSeconds === 0) {
+            handleTimeUp();
+          }
+        }
+      }, 1000);
+    }
+
+    function stopTimerLoop() {
+      if (state.timerInterval) {
+        clearInterval(state.timerInterval);
+        state.timerInterval = null;
+      }
+    }
+
+    function handleTimeUp() {
+      stopTimerLoop();
+      state.isRunning = false;
+      updateControlButtons();
+      updateTimeDisplay();
+
+      audio.playFanfare();
+      launchConfetti();
+      showPartyModal();
+    }
+
+    function updateControlButtons() {
+      const btn = document.getElementById('btnMainToggle');
+      const icon = document.getElementById('mainBtnIcon');
+      const text = document.getElementById('mainBtnText');
+
+      if (state.isRunning) {
+        btn.className = 'btn-giant btn-pause';
+        icon.textContent = '⏸';
+        text.textContent = '暫停計時';
+      } else {
+        btn.className = 'btn-giant btn-start';
+        icon.textContent = '▶';
+        text.textContent = state.remainingSeconds < state.totalSeconds && state.remainingSeconds > 0 ? '繼續計時' : '開始計時';
+      }
+    }
+
+    function resetTimer() {
+      stopTimerLoop();
+      state.isRunning = false;
+      state.remainingSeconds = state.totalSeconds;
+      updateControlButtons();
+      updateTimeDisplay();
+      audio.playPop();
+    }
+
+    function addSeconds(sec) {
+      state.totalSeconds = Math.max(30, state.totalSeconds + sec);
+      state.remainingSeconds = Math.max(0, state.remainingSeconds + sec);
+      updateTimeDisplay();
+      audio.playPop();
+    }
+
+    /* ========================================================
+     * 5. 慶祝派對彩帶動畫 (Confetti Cannon)
+     * ======================================================== */
+    const confettiCanvas = document.getElementById('confettiCanvas');
+    const confettiCtx = confettiCanvas.getContext('2d');
+
+    function resizeConfetti() {
+      confettiCanvas.width = window.innerWidth;
+      confettiCanvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeConfetti);
+    resizeConfetti();
+
+    function launchConfetti() {
+      state.confettiParticles = [];
+      const colors = ['#ff6b6b', '#ffd43b', '#4dabf7', '#69db7c', '#da77f2', '#ff922b'];
+      const W = confettiCanvas.width;
+      const H = confettiCanvas.height;
+
+      for (let i = 0; i < 160; i++) {
+        state.confettiParticles.push({
+          x: W / 2,
+          y: H * 0.45,
+          vx: (Math.random() - 0.5) * 22,
+          vy: (Math.random() - 0.8) * 24,
+          size: 8 + Math.random() * 8,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          rotation: Math.random() * Math.PI * 2,
+          rotSpeed: (Math.random() - 0.5) * 0.2,
+          gravity: 0.45,
+          alpha: 1
+        });
+      }
+
+      animateConfetti();
+    }
+
+    function animateConfetti() {
+      confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+
+      for (let i = 0; i < state.confettiParticles.length; i++) {
+        const p = state.confettiParticles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += p.gravity;
+        p.rotation += p.rotSpeed;
+        p.alpha -= 0.005;
+
+        confettiCtx.save();
+        confettiCtx.translate(p.x, p.y);
+        confettiCtx.rotate(p.rotation);
+        confettiCtx.fillStyle = p.color;
+        confettiCtx.globalAlpha = Math.max(0, p.alpha);
+        confettiCtx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.7);
+        confettiCtx.restore();
+      }
+
+      state.confettiParticles = state.confettiParticles.filter(p => p.alpha > 0);
+
+      if (state.confettiParticles.length > 0) {
+        requestAnimationFrame(animateConfetti);
+      }
+    }
+
+    const partyModal = document.getElementById('partyModal');
+    function showPartyModal() {
+      partyModal.classList.add('show');
+    }
+
+    document.getElementById('btnCloseParty').addEventListener('click', () => {
+      partyModal.classList.remove('show');
+      resetTimer();
+    });
+
+    /* ========================================================
+     * 6. 控制事件綁定
+     * ======================================================== */
+    document.getElementById('btnMainToggle').addEventListener('click', toggleTimer);
+    document.getElementById('btnReset').addEventListener('click', resetTimer);
+    document.getElementById('btnAdd30s').addEventListener('click', () => addSeconds(30));
+    document.getElementById('btnAdd1m').addEventListener('click', () => addSeconds(60));
+    document.getElementById('btnMinus1m').addEventListener('click', () => addSeconds(-60));
+
+    document.querySelectorAll('.theme-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.theme-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        state.theme = tab.dataset.theme;
+        audio.playPop();
+      });
+    });
+
+    document.querySelectorAll('.chip-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.chip-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        const sec = parseInt(btn.dataset.seconds, 10);
+        state.totalSeconds = sec;
+        state.remainingSeconds = sec;
+        stopTimerLoop();
+        state.isRunning = false;
+        updateControlButtons();
+        updateTimeDisplay();
+        audio.playPop();
+      });
+    });
+
+    const btnSoundToggle = document.getElementById('btnSoundToggle');
+    const soundIcon = document.getElementById('soundIcon');
+    btnSoundToggle.addEventListener('click', () => {
+      state.soundEnabled = !state.soundEnabled;
+      soundIcon.textContent = state.soundEnabled ? '🔊' : '🔇';
+      if (state.soundEnabled) audio.playPop();
+    });
+
+    const btnFullscreen = document.getElementById('btnFullscreen');
+    btnFullscreen.addEventListener('click', () => {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else {
+        if (document.exitFullscreen) document.exitFullscreen();
+      }
+    });
+
+    window.addEventListener('load', () => {
+      updateTimeDisplay();
+      renderStage();
+    });
+  </script>
+</body>
+</html>
