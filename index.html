@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>國小數位互動學習樂園 🎒</title>
+  <style>
+    :root {
+      --primary: #4f46e5;
+      --primary-light: #6366f1;
+      --accent-cyan: #06b6d4;
+      --accent-amber: #f59e0b;
+      --accent-emerald: #10b981;
+      --accent-rose: #f43f5e;
+      --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+      --card-bg: rgba(30, 41, 59, 0.75);
+      --card-border: rgba(255, 255, 255, 0.12);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      font-family: system-ui, -apple-system, "Microsoft JhengHei", "Noto Sans TC", sans-serif;
+    }
+
+    body {
+      background: var(--bg-gradient);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px 16px 40px;
+      overflow-x: hidden;
+    }
+
+    /* 頂部導航條 */
+    .top-header {
+      width: 100%;
+      max-width: 1080px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      padding: 0 10px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-logo {
+      width: 44px;
+      height: 44px;
+      background: linear-gradient(135deg, #38bdf8, #818cf8);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      box-shadow: 0 0 15px rgba(56, 189, 248, 0.45);
+    }
+
+    .brand-title h1 {
+      font-size: 1.35rem;
+      font-weight: 800;
+      background: linear-gradient(90deg, #38bdf8, #a78bfa, #f472b6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .brand-title p {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    /* 首頁上方：QR Code 精美展示區塊 */
+    .hero-qr-section {
+      width: 100%;
+      max-width: 1080px;
+      background: rgba(30, 41, 59, 0.65);
+      border: 1px solid var(--card-border);
+      border-radius: 28px;
+      backdrop-filter: blur(16px);
+      padding: 28px;
+      margin-bottom: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 32px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-qr-section::before {
+      content: "";
+      position: absolute;
+      top: -50px;
+      right: -50px;
+      width: 180px;
+      height: 180px;
+      background: radial-gradient(circle, rgba(56, 189, 248, 0.25) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .qr-info {
+      flex: 1;
+    }
+
+    .qr-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(56, 189, 248, 0.15);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      color: #38bdf8;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    .qr-info h2 {
+      font-size: 1.7rem;
+      font-weight: 900;
+      color: #ffffff;
+      margin-bottom: 10px;
+      letter-spacing: -0.5px;
+    }
+
+    .qr-info p {
+      font-size: 0.95rem;
+      color: #cbd5e1;
+      line-height: 1.6;
+      margin-bottom: 16px;
+    }
+
+    .qr-features {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .qr-feature-tag {
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+      padding: 6px 12px;
+      font-size: 0.8rem;
+      color: #94a3b8;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* QR Code 圖片外框 */
+    .qr-frame {
+      background: #ffffff;
+      border-radius: 22px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 14px 30px rgba(0, 0, 0, 0.4), 0 0 0 4px rgba(255, 255, 255, 0.15);
+      transition: transform 0.3s var(--bounce);
+      flex-shrink: 0;
+    }
+
+    .qr-frame:hover {
+      transform: translateY(-4px) scale(1.03);
+    }
+
+    .qr-image {
+      width: 170px;
+      height: 170px;
+      display: block;
+      border-radius: 12px;
+      object-fit: contain;
+    }
+
+    .qr-caption {
+      font-size: 0.78rem;
+      font-weight: 800;
+      color: #1e293b;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* 內容專區標題 */
+    .section-header {
+      width: 100%;
+      max-width: 1080px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      padding: 0 6px;
+    }
+
+    .section-header h3 {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-header span.tag {
+      font-size: 0.78rem;
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-muted);
+      padding: 4px 10px;
+      border-radius: 8px;
+    }
+
+    /* 卡片清單網格 */
+    .cards-grid {
+      width: 100%;
+      max-width: 1080px;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px;
+    }
+
+    @media (max-width: 800px) {
+      .cards-grid {
+        grid-template-columns: 1fr;
+      }
+      .hero-qr-section {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+      }
+      .qr-features {
+        justify-content: center;
+      }
+    }
+
+    /* 課程卡片 */
+    .app-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 24px;
+      padding: 26px;
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      backdrop-filter: blur(16px);
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+      transition: all 0.3s var(--bounce);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .app-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 6px;
+      background: linear-gradient(90deg, #38bdf8, #818cf8);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .app-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 22px 45px rgba(0, 0, 0, 0.5);
+      border-color: rgba(56, 189, 248, 0.4);
+    }
+
+    .app-card:hover::before {
+      opacity: 1;
+    }
+
+    .card-top {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .card-icon {
+      width: 62px;
+      height: 62px;
+      border-radius: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      flex-shrink: 0;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .icon-motor {
+      background: linear-gradient(135deg, #0ea5e9, #4f46e5);
+      box-shadow: 0 8px 20px rgba(14, 165, 233, 0.35);
+    }
+
+    .icon-timer {
+      background: linear-gradient(135deg, #f59e0b, #ec4899);
+      box-shadow: 0 8px 20px rgba(245, 158, 11, 0.35);
+    }
+
+    .card-meta {
+      flex: 1;
+    }
+
+    .card-badge {
+      display: inline-block;
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      margin-bottom: 6px;
+    }
+
+    .badge-motor {
+      background: rgba(14, 165, 233, 0.15);
+      color: #38bdf8;
+      border: 1px solid rgba(14, 165, 233, 0.3);
+    }
+
+    .badge-timer {
+      background: rgba(245, 158, 11, 0.15);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .card-title {
+      font-size: 1.3rem;
+      font-weight: 800;
+      color: #ffffff;
+      line-height: 1.3;
+    }
+
+    .card-desc {
+      font-size: 0.88rem;
+      color: #cbd5e1;
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+
+    .card-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    .card-tag {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      padding: 4px 10px;
+      font-size: 0.76rem;
+      color: #94a3b8;
+      font-weight: 600;
+    }
+
+    .card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      padding-top: 16px;
+    }
+
+    .card-cta {
+      font-size: 0.92rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: #38bdf8;
+      transition: transform 0.2s var(--bounce);
+    }
+
+    .app-card:hover .card-cta {
+      transform: translateX(4px);
+      color: #60a5fa;
+    }
+
+    .status-indicator {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.78rem;
+      color: #10b981;
+      font-weight: 700;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 8px #10b981;
+      animation: pulse-dot 1.5s infinite;
+    }
+
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    /* 頁尾 */
+    footer {
+      margin-top: 40px;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      text-align: center;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 頂部品牌條 -->
+  <header class="top-header">
+    <div class="brand">
+      <div class="brand-logo">🎓</div>
+      <div class="brand-title">
+        <h1>國小自然與生活科技・數位互動樂園</h1>
+        <p>互動模擬教材・電子白板與自主學習首選</p>
+      </div>
+    </div>
+  </header>
+
+  <!-- 首頁上方：QR Code 精美圖示區塊 -->
+  <section class="hero-qr-section">
+    <div class="qr-info">
+      <div class="qr-badge">
+        <span>📲</span>
+        <span>隨掃即用・跨裝置支援</span>
+      </div>
+      <h2>掃描 QR Code・手機與平板隨時暢玩</h2>
+      <p>
+        使用手機或平板相機掃描右側條碼，即可將互動實驗室隨身攜帶！免安裝 App、免登入，支援大螢幕投影、觸控白板與學生個別操作。
+      </p>
+      <div class="qr-features">
+        <div class="qr-feature-tag"><span>✨</span> 支援手機直橫向操作</div>
+        <div class="qr-feature-tag"><span>⚡</span> 60 FPS 物理流暢模擬</div>
+        <div class="qr-feature-tag"><span>🔊</span> 內建合成互動音效</div>
+      </div>
+    </div>
+
+    <!-- QR Code 圖片展示 -->
+    <div class="qr-frame">
+      <img src="qrcode.png" alt="掃描 QR Code 進入數位互動學習樂園" class="qr-image">
+      <div class="qr-caption">
+        <span>📷</span>
+        <span>相機掃描直接開啟</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 課程單元選單 -->
+  <div class="section-header">
+    <h3>
+      <span>📚</span>
+      <span>精選互動單元</span>
+    </h3>
+    <span class="tag">共 2 個單元</span>
+  </div>
+
+  <section class="cards-grid">
+
+    <!-- 單元 1：電動機（直流馬達）動畫（直接連結到 a1.html） -->
+    <a href="a1.html" class="app-card">
+      <div>
+        <div class="card-top">
+          <div class="card-icon icon-motor">⚡</div>
+          <div class="card-meta">
+            <span class="card-badge badge-motor">六年級自然科・電磁鐵與電動機</span>
+            <h4 class="card-title">電動機（直流馬達）動畫實驗室</h4>
+          </div>
+        </div>
+
+        <p class="card-desc">
+          探索馬達為什麼會持續同方向旋轉！專為國小六年級設計：清晰呈現 2.5D 立體線圈、永久磁鐵磁力線、半圓形集電環（換向器）在垂直死點靠慣性轉動的核心考點，並可自由切換電池數量、電流方向與磁極配置。
+        </p>
+
+        <div class="card-tags">
+          <span class="card-tag">🧲 磁力線 (N→S)</span>
+          <span class="card-tag">🔄 半圓形集電環換向</span>
+          <span class="card-tag">✋ 右手開掌定則</span>
+          <span class="card-tag">🎯 隨堂大挑戰題庫</span>
+        </div>
+      </div>
+
+      <div class="card-footer">
+        <div class="status-indicator">
+          <div class="status-dot"></div>
+          <span>互動模擬進行中</span>
+        </div>
+        <div class="card-cta">
+          <span>開啟實驗室</span>
+          <span>➔</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- 單元 2：低年級可視化倒數計時器（連結到 timer.html） -->
+    <a href="timer.html" class="app-card">
+      <div>
+        <div class="card-top">
+          <div class="card-icon icon-timer">⏰</div>
+          <div class="card-meta">
+            <span class="card-badge badge-timer">一年級生活常規・時間管理</span>
+            <h4 class="card-title">可視化倒數計時器（專注鐘）</h4>
+          </div>
+        </div>
+
+        <p class="card-desc">
+          為低年級學童打造的「看得見的時間」！具備經典漸消彩盤鐘、太空火箭升空與神奇蘋果樹三大卡通主題，搭配巨型按鍵與一年級收書包、潔牙、下課等情境快捷鍵，時間結束伴隨彩色紙花爆炸派對！
+        </p>
+
+        <div class="card-tags">
+          <span class="card-tag">🌈 經典彩盤漸消</span>
+          <span class="card-tag">🚀 火箭升空動畫</span>
+          <span class="card-tag">🍎 神奇蘋果採收</span>
+          <span class="card-tag">🎉 全螢幕彩帶派對</span>
+        </div>
+      </div>
+
+      <div class="card-footer">
+        <div class="status-indicator">
+          <div class="status-dot"></div>
+          <span>課堂即時工具</span>
+        </div>
+        <div class="card-cta">
+          <span>開啟計時器</span>
+          <span>➔</span>
+        </div>
+      </div>
+    </a>
+
+  </section>
+
+  <footer>
+    國小數位互動學習樂園 © 2026・設計給老師教學與學生自主探索的優質教材
+  </footer>
+
+</body>
+</html>
